@@ -44,6 +44,7 @@ class Strategy(BaseStrategy):
     exchange:str
     symbol: str
     side: str
+    ltp: Optional[float]
     buy_quantity: Optional[int]
     buy_offset: Optional[float]
     buy_target: Optional[float]
@@ -59,9 +60,32 @@ class Strategy(BaseStrategy):
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
     order: Optional[CompoundOrder]
-    direction:Optional[int]
+    _direction:Optional[int]
     _next_entry_price:Optional[float]
     _current_entry_price: Optional[float]
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        com = CompoundOrder(broker=self.broker,
+                            timezone='Asia/Kolkata')
+        self.order = com
+        if self.side == "buy":
+            self._direction = 1
+        elif self.side == "sell":
+            self._direction = -1
+        else:
+            self._direction = None
+
+
+    @property
+    def direction(self):
+        return self._direction
+
+
+
+
+
+
 
 
 

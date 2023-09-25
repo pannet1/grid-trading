@@ -67,6 +67,8 @@ def test_strategy_defaults():
     broker = FakeBroker()
     strategy = Strategy(broker=broker, exchange='NSE', symbol='BHEL', side='buy')
     assert strategy.symbol == 'BHEL'
+    assert strategy.order is not None
+    assert strategy.order.count == 0
 
 
 def test_strategy_defaults_mixed(strategy_buy, strategy_sell, strategy_both):
@@ -78,3 +80,10 @@ def test_strategy_defaults_mixed(strategy_buy, strategy_sell, strategy_both):
     assert buy.sell_price is None
     assert sell.buy_price is None
     assert both.sell_target == both.buy_target == buy.buy_target == sell.sell_target
+
+def test_strategy_direction(strategy_buy, strategy_sell):
+    assert strategy_buy.direction == 1
+    assert strategy_sell.direction == -1
+    broker = FakeBroker()
+    strategy = Strategy(broker=broker, exchange='NSE', symbol='BHEL', side='both')
+    assert strategy.direction is None
