@@ -2,6 +2,9 @@ from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
 from typing import Any, List, Optional
+from collections import Counter
+import json
+from logzero import logger
 
 
 class BaseStrategy(BaseModel):
@@ -89,3 +92,50 @@ class Strategy(BaseStrategy):
     @property
     def next_entry_price(self):
         return self._next_entry_price
+
+
+    def _create_entry_order(self)->Optional[Order]:
+        """
+        Create a order
+        """
+        if self.direction == 1:
+            quantity = self.buy_quantity
+            side = "buy"
+        elif self.direction == -1:
+            quantity = self.sell_quantity
+            side = "sell"
+        else:
+            logger.warning("No direction yet; so order cannot be created")
+            return None
+        order = Order(
+                symbol=self.symbol,
+                side=side,
+                quantity=quantity,
+                price=self.next_entry_price,
+                order_type='LIMIT'
+                )
+        return order
+
+    def _create_target_order(self)->Optional[Order]:
+        if self.direction == 1:
+            quantity = self.buy_quantity
+            trigger_price = self.next_entry_price + self.buy_target
+            side = 'sell'
+        elif self.direction == -1:
+            quantity = self.sell_quantity
+            trigger_price = self.next_entry_price - self.sell_target
+            side = 'buy'
+        else:
+            logger.warning("No direction yet; so order cannot be created")
+            return None
+        order = Order(
+                symbol=self.symbol,
+                side=side,
+                quantity=quantity,
+                trigger_price=trigger_price,
+                price=0.0,
+                order_type='SL-M'
+                )
+        return order
+
+        

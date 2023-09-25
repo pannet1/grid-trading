@@ -102,3 +102,57 @@ def test_strategy_buy_defaults(strategy_buy):
 def test_strategy_sell_defaults(strategy_sell):
     sell = strategy_sell
     assert sell.next_entry_price == 102
+
+def test_strategy_create_entry_order_buy(strategy_buy):
+    order = strategy_buy._create_entry_order()
+    assert order.price == 98
+    assert order.order_type == 'LIMIT'
+    assert order.quantity == 10
+    assert order.side == "buy"
+    strategy_buy.buy_quantity = 20
+    order = strategy_buy._create_entry_order()
+    assert order.quantity == 20
+
+def test_strategy_create_entry_order_buy(strategy_buy):
+    order = strategy_buy._create_entry_order()
+    assert order.price == 98
+    assert order.order_type == 'LIMIT'
+    assert order.quantity == 10
+    assert order.side == "buy"
+    strategy_buy.buy_quantity = 20
+    order = strategy_buy._create_entry_order()
+    assert order.quantity == 20
+
+def test_strategy_create_entry_order_sell(strategy_sell):
+    order = strategy_sell._create_entry_order()
+    assert order.price == 102
+    assert order.order_type == 'LIMIT'
+    assert order.quantity == 10
+    assert order.side == "sell"
+
+def test_strategy_create_target_order_buy(strategy_buy):
+    order = strategy_buy._create_target_order()
+    assert order.trigger_price == 101
+    assert order.price == 0
+    assert order.order_type == 'SL-M'
+    assert order.quantity == 10
+    assert order.side == "sell"
+    strategy_buy.buy_quantity = 20
+    strategy_buy.buy_target = 4
+    order = strategy_buy._create_target_order()
+    assert order.quantity == 20
+    assert order.trigger_price == 102
+    assert order.price == 0
+
+def test_strategy_create_target_order_sell(strategy_sell):
+    order = strategy_sell._create_target_order()
+    assert order.trigger_price == 99
+    assert order.price == 0
+    assert order.order_type == 'SL-M'
+    assert order.quantity == 10
+    assert order.side == "buy"
+    strategy_sell.sell_quantity = 20
+    strategy_sell.sell_target = 4
+    order = strategy_sell._create_target_order()
+    assert order.quantity == 20
+    assert order.trigger_price == 98
