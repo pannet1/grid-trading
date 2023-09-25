@@ -8,35 +8,37 @@ from copy import deepcopy
 def strategy_buy():
     broker = FakeBroker()
     return Strategy(
-            broker=broker,
-            exchange='NSE',
-            symbol='BHEL',
-            side="buy",
-            buy_quantity=10,
-            buy_offset=2,
-            buy_price=100,
-            buy_target=3,
-            max_buy_quantity=50,
-            max_orders_cap=30,
-            buy_stop_price=70
-            )
+        broker=broker,
+        exchange="NSE",
+        symbol="BHEL",
+        side="buy",
+        buy_quantity=10,
+        buy_offset=2,
+        buy_price=100,
+        buy_target=3,
+        max_buy_quantity=50,
+        max_orders_cap=30,
+        buy_stop_price=70,
+    )
+
 
 @pytest.fixture
 def strategy_sell():
     broker = FakeBroker()
     return Strategy(
-            broker=broker,
-            exchange='NSE',
-            symbol='BHEL',
-            side="sell",
-            sell_quantity=10,
-            sell_offset=2,
-            sell_price=100,
-            sell_target=3,
-            max_sell_quantity=50,
-            max_orders_cap=30,
-            sell_stop_price=120
-            )
+        broker=broker,
+        exchange="NSE",
+        symbol="BHEL",
+        side="sell",
+        sell_quantity=10,
+        sell_offset=2,
+        sell_price=100,
+        sell_target=3,
+        max_sell_quantity=50,
+        max_orders_cap=30,
+        sell_stop_price=120,
+    )
+
 
 @pytest.fixture
 def strategy_both(strategy_buy):
@@ -50,6 +52,7 @@ def strategy_both(strategy_buy):
     strategy.sell_stop_price = 120
     return strategy
 
+
 def test_base_strategy():
     broker = FakeBroker()
     base = BaseStrategy(broker=broker)
@@ -58,17 +61,18 @@ def test_base_strategy():
 
 def test_base_strategy_different_datafeed():
     broker = FakeBroker()
-    datafeed = FakeBroker(name='feed')
+    datafeed = FakeBroker(name="feed")
     base = BaseStrategy(broker=broker, datafeed=datafeed)
-    assert base.datafeed.name == 'feed'
+    assert base.datafeed.name == "feed"
 
 
 def test_strategy_defaults():
     broker = FakeBroker()
-    strategy = Strategy(broker=broker, exchange='NSE', symbol='BHEL', side='buy')
-    assert strategy.symbol == 'BHEL'
+    strategy = Strategy(broker=broker, exchange="NSE", symbol="BHEL", side="buy")
+    assert strategy.symbol == "BHEL"
     assert strategy.order is not None
     assert strategy.order.count == 0
+    assert strategy.next_entry_price is None
 
 
 def test_strategy_defaults_mixed(strategy_buy, strategy_sell, strategy_both):
@@ -81,9 +85,20 @@ def test_strategy_defaults_mixed(strategy_buy, strategy_sell, strategy_both):
     assert sell.buy_price is None
     assert both.sell_target == both.buy_target == buy.buy_target == sell.sell_target
 
+
 def test_strategy_direction(strategy_buy, strategy_sell):
     assert strategy_buy.direction == 1
     assert strategy_sell.direction == -1
     broker = FakeBroker()
-    strategy = Strategy(broker=broker, exchange='NSE', symbol='BHEL', side='both')
+    strategy = Strategy(broker=broker, exchange="NSE", symbol="BHEL", side="both")
     assert strategy.direction is None
+
+
+def test_strategy_buy_defaults(strategy_buy):
+    buy = strategy_buy
+    assert buy.next_entry_price == 98
+
+
+def test_strategy_sell_defaults(strategy_sell):
+    sell = strategy_sell
+    assert sell.next_entry_price == 102
