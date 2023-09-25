@@ -62,14 +62,13 @@ class Strategy(BaseStrategy):
     max_orders_cap: Optional[float]
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
-    order: Optional[CompoundOrder]
+    orders: Optional[List[CompoundOrder]]
     _direction: Optional[int]
     _next_entry_price: Optional[float]
 
     def __init__(self, **data):
         super().__init__(**data)
-        com = CompoundOrder(broker=self.broker, timezone="Asia/Kolkata")
-        self.order = com
+        self.orders = []
         self._next_entry_price = None
         if self.side == "buy":
             self._direction = 1
@@ -139,3 +138,11 @@ class Strategy(BaseStrategy):
         return order
 
         
+    def create_order(self)->Optional[CompoundOrder]:
+        com = CompoundOrder(broker=self.broker)
+        entry = self._create_entry_order()
+        target = self._create_target_order()
+        com.add(order=entry, key='entry')
+        com.add(order=target, key='target')
+        self.orders.append(com)
+

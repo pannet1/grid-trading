@@ -70,8 +70,7 @@ def test_strategy_defaults():
     broker = FakeBroker()
     strategy = Strategy(broker=broker, exchange="NSE", symbol="BHEL", side="buy")
     assert strategy.symbol == "BHEL"
-    assert strategy.order is not None
-    assert strategy.order.count == 0
+    assert strategy.orders == []
     assert strategy.next_entry_price is None
 
 
@@ -156,3 +155,16 @@ def test_strategy_create_target_order_sell(strategy_sell):
     order = strategy_sell._create_target_order()
     assert order.quantity == 20
     assert order.trigger_price == 98
+
+def test_strategy_create_order(strategy_buy, strategy_sell):
+    buy = strategy_buy
+    sell = strategy_sell
+    buy.create_order()
+    sell.create_order()
+    assert len(buy.orders) == 1
+    assert len(sell.orders) == 1
+    assert buy.orders[0].get('entry').price == 98
+    assert buy.orders[0].get('target').trigger_price == 101
+    assert sell.orders[0].get('entry').price == 102
+    assert sell.orders[0].get('target').trigger_price == 99
+
