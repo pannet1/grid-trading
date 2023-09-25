@@ -92,8 +92,7 @@ class Strategy(BaseStrategy):
     def next_entry_price(self):
         return self._next_entry_price
 
-
-    def _create_entry_order(self)->Optional[Order]:
+    def _create_entry_order(self) -> Optional[Order]:
         """
         Create a order
         """
@@ -107,42 +106,52 @@ class Strategy(BaseStrategy):
             logger.warning("No direction yet; so order cannot be created")
             return None
         order = Order(
-                symbol=self.symbol,
-                side=side,
-                quantity=quantity,
-                price=self.next_entry_price,
-                order_type='LIMIT'
-                )
+            symbol=self.symbol,
+            side=side,
+            quantity=quantity,
+            price=self.next_entry_price,
+            order_type="LIMIT",
+        )
         return order
 
-    def _create_target_order(self)->Optional[Order]:
+    def _create_target_order(self) -> Optional[Order]:
         if self.direction == 1:
             quantity = self.buy_quantity
             trigger_price = self.next_entry_price + self.buy_target
-            side = 'sell'
+            side = "sell"
         elif self.direction == -1:
             quantity = self.sell_quantity
             trigger_price = self.next_entry_price - self.sell_target
-            side = 'buy'
+            side = "buy"
         else:
             logger.warning("No direction yet; so order cannot be created")
             return None
         order = Order(
-                symbol=self.symbol,
-                side=side,
-                quantity=quantity,
-                trigger_price=trigger_price,
-                price=0.0,
-                order_type='SL-M'
-                )
+            symbol=self.symbol,
+            side=side,
+            quantity=quantity,
+            trigger_price=trigger_price,
+            price=0.0,
+            order_type="SL-M",
+        )
         return order
 
-        
-    def create_order(self)->Optional[CompoundOrder]:
+    def create_order(self) -> Optional[CompoundOrder]:
         com = CompoundOrder(broker=self.broker)
         entry = self._create_entry_order()
         target = self._create_target_order()
-        com.add(order=entry, key='entry')
-        com.add(order=target, key='target')
-        self.orders.append(com)
+        if entry and target:
+            com.add(order=entry, key="entry")
+            com.add(order=target, key="target")
+            self.orders.append(com)
+            self.update_next_entry_price()
 
+    def update_next_entry_price(self) -> float:
+        """
+        Update the next entry price to be entered into
+        """
+        if self.direction == 1:
+            self._next_entry_price = self.next_entry_price - self.buy_offset
+        elif self.direction == -1:
+            self._next_entry_price = self.next_entry_price + self.sell_offset
+        return self.next_entry_price
