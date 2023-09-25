@@ -59,7 +59,7 @@ class Strategy(BaseStrategy):
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
     order: Optional[CompoundOrder]
-    direction:Optional[str]
+    direction:Optional[int]
     _next_entry_price:Optional[float]
     _current_entry_price: Optional[float]
 
