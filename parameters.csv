@@ -1,0 +1,5 @@
+exchange,symbol,side,buy_quantity,buy_offset,buy_target,buy_price,sell_quantity,sell_offset,sell_target,sell_price,status,max_buy_quantity,max_sell_quantity,max_orders_cap,buy_stop_price,sell_stop_price
+NSE,BANKBEES-EQ,BUY,50,4,6.35,460,,,,,1,500,,100,330,
+NSE,FSL-EQ,BUY,30,2,3.55,161,,,,,1,1000,,100,130,
+NFO,BANKNIFTY28SEP2023,BOTH,15,350,450,45000,15,350,450,46000,1,150,150,20,41000,47000
+MCX,SILVERMICNOV2023,SELL,,,,,1,1000,1500,76000,0,,5,9,,85000
