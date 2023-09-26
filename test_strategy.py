@@ -210,3 +210,47 @@ def test_strategy_update_next_entry_price(strategy_buy, strategy_sell, strategy_
     assert both.update_next_entry_price() is None
     both.update_next_entry_price()
     assert both.update_next_entry_price() is None
+
+def test_entry_buy_strategy(strategy_buy):
+    s = strategy_buy
+    s.entry()
+    assert len(s.orders) == 0
+    s.ltp = 98
+    s.entry()
+    assert len(s.orders) == 1
+    for i in range(10):
+        s.entry()
+    assert len(s.orders) == 1
+    s.ltp = 90
+    for i in range(10):
+        s.entry()
+    # Should have placed orders till the next entry price is less than ltp
+    assert len(s.orders) == 5
+    for i in range(10):
+        s.ltp = s.ltp+2
+        s.entry()
+    # Check order limit prices
+    assert [x.get('entry').price for x in s.orders] == [98,96,94,92,90]
+
+
+def test_entry_sell_strategy(strategy_sell):
+    s = strategy_sell
+    s.entry()
+    assert len(s.orders) == 0
+    s.ltp = 101
+    s.entry()
+    assert len(s.orders) == 0
+    s.ltp = 102
+    s.entry()
+    assert len(s.orders) == 1
+    for i in range(10):
+        s.entry()
+    assert len(s.orders) == 1
+    s.ltp = 110
+    for i in range(10):
+        s.entry()
+    assert len(s.orders) == 5
+
+    # Check order limit prices
+    assert [x.get('entry').price for x in s.orders] == [102,104,106,108,110]
+

@@ -6,6 +6,7 @@ from collections import Counter
 import json
 from logzero import logger
 
+from omspy.simulation.models import OrderType
 
 class BaseStrategy(BaseModel):
     """
@@ -37,7 +38,6 @@ class BaseStrategy(BaseModel):
 
     @property
     def can_enter(self) -> bool:
-        now = pendulum.now(tz=self.c.TZ)
         methods = [attr for attr in dir(self) if attr.startswith("before_entry")]
         checks = [getattr(self, attr)() for attr in methods]
         return all(checks)
@@ -110,7 +110,7 @@ class Strategy(BaseStrategy):
             side=side,
             quantity=quantity,
             price=self.next_entry_price,
-            order_type="LIMIT",
+            order_type="LIMIT"
         )
         return order
 
@@ -144,7 +144,7 @@ class Strategy(BaseStrategy):
             com.add(order=entry, key="entry")
             com.add(order=target, key="target")
             self.orders.append(com)
-            self.update_next_entry_price()
+        return com
 
     def update_next_entry_price(self) -> float:
         """
@@ -155,3 +155,28 @@ class Strategy(BaseStrategy):
         elif self.direction == -1:
             self._next_entry_price = self.next_entry_price + self.sell_offset
         return self.next_entry_price
+
+    def _place_entry_order(self):
+        """
+        Place the initial entry order and update the necessary fields
+        """
+        orders = self.create_order()
+        self.update_next_entry_price()
+        # Execute the actual order
+        order = orders.get('entry').execute(broker=self.broker, order_type="LIMIT")
+        order_id = order.order_id
+        logger.info(f"Order placed at {self.ltp} with {order_id}")
+
+    def entry(self):
+        """
+        logic to enter into a position
+        """
+        if not(self.can_enter):
+            return
+        if self.direction == 1:
+            if self.ltp <= self.next_entry_price:
+                self._place_entry_order()
+        elif self.direction == -1:
+            if self.ltp >= self.next_entry_price:
+                self._place_entry_order()
+
