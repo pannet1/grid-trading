@@ -5,13 +5,12 @@ import numpy as np
 from typing import List
 from copy import deepcopy
 from strategy import Strategy
-from omspy.brokers.zerodha import Zerodha
+from omspy.brokers.finvasia import Finvasia
 from omspy.simulation.virtual import ReplicaBroker, FakeBroker
 from logzero import logger
 
 
-
-def get_all_symbols(strategies:List[Strategy])->List[str]:
+def get_all_symbols(strategies: List[Strategy]) -> List[str]:
     """
     Get the list of all symbols from the given list of 
     strategies in the format required to extract data 
@@ -30,7 +29,7 @@ def main():
     broker = FakeBroker()
     for params in parameters:
         try:
-            p = {k:v for k,v in params.items() if pd.notnull(v)}
+            p = {k: v for k, v in params.items() if pd.notnull(v)}
             strategy = Strategy(**p, broker=broker, datafeed=datafeed)
             strategies.append(strategy)
         except Exception as e:
@@ -38,14 +37,11 @@ def main():
     symbols = get_all_symbols(strategies)
 
 
-
 if __name__ == "__main__":
-    config_file = os.path.join(os.environ['HOME'],'systemtrader', 'config.yaml')
+    config_file = os.path.join(
+        os.environ['HOME'], 'systemtrader', 'config.yaml')
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)[0]['config']
-        datafeed = Zerodha(**config)
+        datafeed = Finvasia(**config)
         datafeed.authenticate()
     main()
-
-
-

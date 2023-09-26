@@ -1,0 +1,8 @@
+logzero 
+sqlite_utils
+git+https://github.com/uberdeveloper/omspy
+pandas
+numpy
+pyotp
+kiteconnect
+selenium
