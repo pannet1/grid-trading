@@ -38,10 +38,8 @@ def main():
 
 
 if __name__ == "__main__":
-    config_file = os.path.join(
-        os.environ['HOME'], 'systemtrader', 'config.yaml')
-    with open(config_file, 'r') as f:
-        config = yaml.safe_load(f)[0]['config']
+    with open('../../finvasia.yaml') as f:
+        config = yaml.safe_load(f)
         datafeed = Finvasia(**config)
         datafeed.authenticate()
     main()

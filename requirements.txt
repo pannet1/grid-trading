@@ -1,8 +1,8 @@
 logzero 
 sqlite_utils
-git+https://github.com/uberdeveloper/omspy
+omspy
 pandas
 numpy
 pyotp
-kiteconnect
 selenium
+../NorenRestApiPy-0.0.20-py2.py3-none-any.whl
