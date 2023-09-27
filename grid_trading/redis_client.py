@@ -1,56 +1,60 @@
-import redis
+from login_get_kite import get_kite, remove_token
+from redis import Redis
 import json
 import time
-import threading
-from login_get_kite import get_kite, remove_token
+from threading import Thread
+from typing import Any, Dict, List, Optional
 
 
-class Rediszero:
+class RedisClient:
     def __init__(self):
         self.kite = get_kite("bypass")
-        self.r = redis.Redis(host='localhost', port=6379)
-        self.pubsub = self.r.pubsub()
-        self.pubsub.subscribe("channel")
-        self.g_list = ['NSE:NIFTYBEES']
+        self.redis = Redis(host='localhost', port=6379)
+        self.psub = self.redis.pubsub()
+        self.psub.subscribe("channel")
+        self.lst_exchsym: List[str] = ['NSE:NIFTYBEES']
+        self.ltp: Optional[Dict[str, float]] = None
 
-    def get_quote(self):
+    def get_quote(self) -> Optional[Dict[str, float]]:
         try:
-            resp = self.kite.ltp(self.g_list)
+            resp = self.kite.ltp(self.lst_exchsym)
             if resp:
                 quotes = {k: v['last_price'] for k, v in resp.items()}
                 return quotes
         except Exception as e:
             print(e)
             remove_token()
+            return None
 
-    def pub(self, symbols_to_add=None):
-        if symbols_to_add and len(symbols_to_add) > 0:
+    def pub(self, lst_new_symbols: Any = None) -> None:
+        dct_exchsym = {}
+        if lst_new_symbols and len(lst_new_symbols) > 0:
             # Method for clients to add new symbols for get_quote updates
-            small_set = set(symbols_to_add)
-            bigger_set = set(self.g_list)
-            # Find the items that are in small_set but not in bigger_set
-            if (small_set - bigger_set):
+            set_newsym = set(lst_new_symbols)
+            set_oldsym = set(self.lst_exchsym)
+            # Find the items that are in set_newsym but not in set_oldsym
+            if (set_newsym - set_oldsym):
                 # Convert both lists to sets and perform a union operation
-                combined_set = set(self.g_list).union(symbols_to_add)
+                set_combo = set(self.lst_exchsym).union(lst_new_symbols)
                 # Convert the result back to a list
-                self.g_list = list(combined_set)
+                self.lst_exchsym = list(set_combo)
         data = self.get_quote()
-        string_data = json.dumps(data)
-        self.r.set("user_data", string_data)
-        self.r.publish("channel", string_data)
+        if data:
+            dct_exchsym = json.dumps(data)
+            self.redis.set("user_data", dct_exchsym)
+        self.redis.publish("channel", dct_exchsym)
 
-    def listen_for_messages(self):
-        for msg in self.pubsub.listen():
+    def listen_for_messages(self) -> None:
+        for msg in self.psub.listen():
             if msg['type'] == 'message':
-                retrieved_data_string = msg['data']
-                retrieved_data = json.loads(retrieved_data_string)
-                self.ltp = retrieved_data
+                bt_dct_exchsym = msg['data']
+                self.ltp = json.loads(bt_dct_exchsym)
 
 
 if __name__ == "__main__":
-    rz = Rediszero()
+    rz = RedisClient()
     # Start a thread to listen for messages
-    message_thread = threading.Thread(target=rz.listen_for_messages)
+    message_thread = Thread(target=rz.listen_for_messages)
     message_thread.daemon = True
     message_thread.start()
     rz.pub()
