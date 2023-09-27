@@ -91,6 +91,13 @@ def test_strategy_defaults():
     assert strategy.orders == []
     assert strategy.next_entry_price is None
 
+def test_strategy_defaults_direction_side_case():
+    broker = FakeBroker()
+    strategy = Strategy(
+        broker=broker, exchange="NSE", symbol="BHEL", side="BUY", ltp=100
+    )
+    assert strategy.direction == 1
+
 
 def test_strategy_defaults_mixed(strategy_buy, strategy_sell, strategy_both):
     # shortcuts only
@@ -211,6 +218,7 @@ def test_strategy_update_next_entry_price(strategy_buy, strategy_sell, strategy_
     both.update_next_entry_price()
     assert both.update_next_entry_price() is None
 
+
 def test_entry_buy_strategy(strategy_buy):
     s = strategy_buy
     s.entry()
@@ -227,10 +235,10 @@ def test_entry_buy_strategy(strategy_buy):
     # Should have placed orders till the next entry price is less than ltp
     assert len(s.orders) == 5
     for i in range(10):
-        s.ltp = s.ltp+2
+        s.ltp = s.ltp + 2
         s.entry()
     # Check order limit prices
-    assert [x.get('entry').price for x in s.orders] == [98,96,94,92,90]
+    assert [x.get("entry").price for x in s.orders] == [98, 96, 94, 92, 90]
 
 
 def test_entry_sell_strategy(strategy_sell):
@@ -252,5 +260,5 @@ def test_entry_sell_strategy(strategy_sell):
     assert len(s.orders) == 5
 
     # Check order limit prices
-    assert [x.get('entry').price for x in s.orders] == [102,104,106,108,110]
+    assert [x.get("entry").price for x in s.orders] == [102, 104, 106, 108, 110]
 

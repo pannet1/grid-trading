@@ -1,13 +1,14 @@
 from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict
 from collections import Counter
 import json
 from logzero import logger
 from sqlite_utils import Database
 
 from omspy.simulation.models import OrderType
+
 
 class BaseStrategy(BaseModel):
     """
@@ -18,7 +19,7 @@ class BaseStrategy(BaseModel):
 
     broker: Any
     datafeed: Optional[Any] = None
-    connection:Optional[Database] = None
+    connection: Optional[Database] = None
     cycle: int = 0
     _broker_name: str
 
@@ -72,9 +73,9 @@ class Strategy(BaseStrategy):
         super().__init__(**data)
         self.orders = []
         self._next_entry_price = None
-        if self.side == "buy":
+        if str(self.side).lower() == "buy":
             self._direction = 1
-        elif self.side == "sell":
+        elif str(self.side).lower() == "sell":
             self._direction = -1
         else:
             self._direction = None
@@ -112,7 +113,7 @@ class Strategy(BaseStrategy):
             side=side,
             quantity=quantity,
             price=self.next_entry_price,
-            order_type="LIMIT"
+            order_type="LIMIT",
         )
         return order
 
@@ -165,7 +166,7 @@ class Strategy(BaseStrategy):
         orders = self.create_order()
         self.update_next_entry_price()
         # Execute the actual order
-        order = orders.get('entry').execute(broker=self.broker, order_type="LIMIT")
+        order = orders.get("entry").execute(broker=self.broker, order_type="LIMIT")
         order_id = order.order_id
         logger.info(f"Order placed at {self.ltp} with {order_id}")
 
@@ -173,8 +174,9 @@ class Strategy(BaseStrategy):
         """
         logic to enter into a position
         """
-        if not(self.can_enter):
+        if not (self.can_enter):
             return
+        print('heelo', self.direction)
         if self.direction == 1:
             if self.ltp <= self.next_entry_price:
                 self._place_entry_order()
@@ -189,11 +191,22 @@ class Strategy(BaseStrategy):
         if len(self.orders) == 0:
             return
         for order in self.orders:
-            target:Order = order.get("target")
+            target: Order = order.get("target")
             if target.is_complete:
-                pass # Do nothing
+                pass  # Do nothing
             else:
                 price = target.price
                 side = target.side
 
-
+    def run(self, ltp:Dict[str, float]):
+        """
+        run this strategy; entry point to run the strategy
+        ltp
+            last price as a dictionary
+        """
+        for k,v in ltp.items():
+            if k == self.symbol:
+                self.ltp = v
+        if self.can_enter:
+            self.entry()
+        self.cycle +=1
