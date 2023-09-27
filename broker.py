@@ -30,7 +30,7 @@ def convert_dict_to_instrument(quotes: Dict[str, Dict]) -> List[Instrument]:
             if type(v) == dict:
                 if all([key in v for key in keys]):
                     inst = Instrument(
-                        name=k,
+                            name=k[4:], # strip exchange from symbol
                         token=v["instrument_token"],
                         last_price=v["last_price"],
                         open=v["ohlc"]["open"],
@@ -71,6 +71,7 @@ class PaperBroker(ReplicaBroker):
         """
         return the last price for the list of given symbols
         """
+        symbols = [s[4:] for s in symbols]
         dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
         return dct
 
