@@ -5,6 +5,7 @@ from typing import Any, List, Optional
 from collections import Counter
 import json
 from logzero import logger
+from sqlite_utils import Database
 
 from omspy.simulation.models import OrderType
 
@@ -17,6 +18,7 @@ class BaseStrategy(BaseModel):
 
     broker: Any
     datafeed: Optional[Any] = None
+    connection:Optional[Database] = None
     cycle: int = 0
     _broker_name: str
 
@@ -137,7 +139,7 @@ class Strategy(BaseStrategy):
         return order
 
     def create_order(self) -> Optional[CompoundOrder]:
-        com = CompoundOrder(broker=self.broker)
+        com = CompoundOrder(broker=self.broker, connection=self.connection)
         entry = self._create_entry_order()
         target = self._create_target_order()
         if entry and target:
@@ -179,4 +181,19 @@ class Strategy(BaseStrategy):
         elif self.direction == -1:
             if self.ltp >= self.next_entry_price:
                 self._place_entry_order()
+
+    def exit(self):
+        """
+        logic to exit a position
+        """
+        if len(self.orders) == 0:
+            return
+        for order in self.orders:
+            target:Order = order.get("target")
+            if target.is_complete:
+                pass # Do nothing
+            else:
+                price = target.price
+                side = target.side
+
 
