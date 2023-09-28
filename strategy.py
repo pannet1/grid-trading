@@ -135,7 +135,7 @@ class Strategy(BaseStrategy):
             quantity=quantity,
             trigger_price=trigger_price,
             price=0.0,
-            order_type="SL-M",
+            order_type="LIMIT",
         )
         return order
 
@@ -149,7 +149,7 @@ class Strategy(BaseStrategy):
             self.orders.append(com)
         return com
 
-    def update_next_entry_price(self)->Optional[float]:
+    def update_next_entry_price(self) -> Optional[float]:
         """
         Update the next entry price to be entered into
         """
@@ -194,7 +194,7 @@ class Strategy(BaseStrategy):
         """
         logic to exit a position
         """
-        if not(self.orders):
+        if not (self.orders):
             return
         for order in self.orders:
             target = order.get("target")

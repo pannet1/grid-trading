@@ -58,6 +58,7 @@ def main():
     symbols = get_all_symbols(strategies)
     # We are mimicking broker here and seeding prices
     broker.symbols = symbols
+    # Change this method to run2 if you are using redis ltp
     broker.run()
     print(connection)
     print(broker.ltp(symbols))

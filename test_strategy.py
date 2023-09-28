@@ -91,6 +91,7 @@ def test_strategy_defaults():
     assert strategy.orders == []
     assert strategy.next_entry_price is None
 
+
 def test_strategy_defaults_direction_side_case():
     broker = FakeBroker()
     strategy = Strategy(
@@ -162,7 +163,7 @@ def test_strategy_create_target_order_buy(strategy_buy):
     order = strategy_buy._create_target_order()
     assert order.trigger_price == 101
     assert order.price == 0
-    assert order.order_type == "SL-M"
+    assert order.order_type == "LIMIT"
     assert order.quantity == 10
     assert order.side == "sell"
     strategy_buy.buy_quantity = 20
@@ -177,7 +178,7 @@ def test_strategy_create_target_order_sell(strategy_sell):
     order = strategy_sell._create_target_order()
     assert order.trigger_price == 99
     assert order.price == 0
-    assert order.order_type == "SL-M"
+    assert order.order_type == "LIMIT"
     assert order.quantity == 10
     assert order.side == "buy"
     strategy_sell.sell_quantity = 20
@@ -261,4 +262,3 @@ def test_entry_sell_strategy(strategy_sell):
 
     # Check order limit prices
     assert [x.get("entry").price for x in s.orders] == [102, 104, 106, 108, 110]
-
