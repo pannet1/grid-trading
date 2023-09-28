@@ -11,6 +11,7 @@ from sqlite_utils import Database
 from broker import paper_broker
 from omspy.brokers.zerodha import Zerodha
 import time
+from redis_client import RedisClient
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
@@ -59,7 +60,7 @@ def main():
     # We are mimicking broker here and seeding prices
     broker.symbols = symbols
     # Change this method to run2 if you are using redis ltp
-    broker.run()
+    broker.run2()
     print(connection)
     print(broker.ltp(symbols))
 
@@ -77,9 +78,14 @@ def main():
 
 
 if __name__ == "__main__":
-    config_file = os.path.join(os.environ["HOME"], "systemtrader", "config.yaml")
+    """
+    config_file = os.path.join(
+        os.environ["HOME"], "systemtrader", "config.yaml")
     with open(config_file) as f:
         config = yaml.safe_load(f)[0]["config"]
         datafeed = Zerodha(**config)
         datafeed.authenticate()
+    """
+    datafeed = RedisClient()
+    datafeed.authenticate()
     main()
