@@ -1,7 +1,7 @@
 """
 This is a paper broker module to test trades
 """
-from omspy_brokers.finvasia import Finvasia
+from omspy.brokers.zerodha import Zerodha
 from omspy.simulation.virtual import ReplicaBroker, FakeBroker
 from logzero import logger
 import os
@@ -11,21 +11,26 @@ from omspy.simulation.models import Instrument
 from omspy.simulation.virtual import generate_price
 from redis_client import RedisClient
 
+try:
+    from omspy_brokers.finvasia import Finvasia
+except ImportError:
+    logger.error("omspy_brokers not installed")
+
+BROKER = Zerodha
+
 
 def ltp_from_server(symbols: List[str]) -> Dict[str, float]:
     """
     retrieves ltp from redis server for the given list of symbols
     """
-    # TODO: This method to be implemented
     return RedisClient().get_ltp(symbols)
 
 
-def get_actual_broker() -> Finvasia:
-    config_file = os.path.join(
-        os.environ["HOME"], "systemtrader", "config.yaml")
+def get_actual_broker():
+    config_file = os.path.join(os.environ["HOME"], "systemtrader", "config.yaml")
     with open(config_file) as f:
         config = yaml.safe_load(f)[0]["config"]
-        broker = Finvasia(**config)
+        broker = BROKER(**config)
         broker.authenticate()
         return broker
 
@@ -79,7 +84,7 @@ def convert_ltp_to_instruments(ltps: Dict[str, float]) -> List[Instrument]:
 
 
 class PaperBroker(ReplicaBroker):
-    broker: Finvasia
+    broker: Zerodha  # This is always zerodha
     symbols: Optional[List[str]]
 
     class Config:
@@ -113,8 +118,7 @@ class PaperBroker(ReplicaBroker):
         return the last price for the list of given symbols
         """
         symbols = [s[4:] for s in symbols]
-        dct = {k: v.last_price for k, v in self.instruments.items()
-               if k in symbols}
+        dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
         return dct
 
 
