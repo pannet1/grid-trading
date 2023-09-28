@@ -75,6 +75,13 @@ def main():
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
+        if i % 5 == 0:
+            orders_dict = {k: v.dict() for k, v in broker.orders.items()}
+            for strategy in strategies:
+                for order in strategy.orders:
+                    # Update order data from broker
+                    # TODO: Correctly implement for paper broker
+                    order.update_orders(orders_dict)
 
 
 if __name__ == "__main__":
