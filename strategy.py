@@ -149,15 +149,18 @@ class Strategy(BaseStrategy):
             self.orders.append(com)
         return com
 
-    def update_next_entry_price(self) -> float:
+    def update_next_entry_price(self)->Optional[float]:
         """
         Update the next entry price to be entered into
         """
-        if self.direction == 1:
-            self._next_entry_price = self.next_entry_price - self.buy_offset
-        elif self.direction == -1:
-            self._next_entry_price = self.next_entry_price + self.sell_offset
-        return self.next_entry_price
+        if self._next_entry_price:
+            if self.direction == 1:
+                self._next_entry_price = self.next_entry_price - self.buy_offset
+            elif self.direction == -1:
+                self._next_entry_price = self.next_entry_price + self.sell_offset
+            return self.next_entry_price
+        else:
+            logger.debug("Entry price still not configured")
 
     def _place_entry_order(self):
         """
@@ -179,26 +182,30 @@ class Strategy(BaseStrategy):
         """
         if not (self.can_enter):
             return
-        if self.direction == 1:
-            if self.ltp <= self.next_entry_price:
-                self._place_entry_order()
-        elif self.direction == -1:
-            if self.ltp >= self.next_entry_price:
-                self._place_entry_order()
+        if self.ltp and self.next_entry_price:
+            if self.direction == 1:
+                if self.ltp <= self.next_entry_price:
+                    self._place_entry_order()
+            elif self.direction == -1:
+                if self.ltp >= self.next_entry_price:
+                    self._place_entry_order()
 
     def exit(self):
         """
         logic to exit a position
         """
-        if len(self.orders) == 0:
+        if not(self.orders):
             return
         for order in self.orders:
-            target: Order = order.get("target")
-            if target.is_complete:
-                pass  # Do nothing
+            target = order.get("target")
+            if target:
+                if target.is_complete:
+                    pass  # Do nothing
+                else:
+                    price = target.price
+                    side = target.side
             else:
-                price = target.price
-                side = target.side
+                logger.error("No target order; something wrong")
 
     def run(self, ltp: Dict[str, float]):
         """
