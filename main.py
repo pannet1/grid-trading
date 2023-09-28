@@ -10,6 +10,7 @@ from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker
 from omspy.brokers.zerodha import Zerodha
+import time
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
@@ -60,6 +61,18 @@ def main():
     broker.run()
     print(connection)
     print(broker.ltp(symbols))
+
+    # Initial update for the next entry prices
+    ltps = broker.ltp(symbols)
+    for strategy in strategies:
+        strategy.run(ltps)
+        strategy.update_next_entry_price()
+
+    for i in range(1000):
+        ltps = broker.ltp(symbols)
+        for strategy in strategies:
+            strategy.run(ltps)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
