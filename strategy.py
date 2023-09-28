@@ -166,8 +166,11 @@ class Strategy(BaseStrategy):
         orders = self.create_order()
         self.update_next_entry_price()
         # Execute the actual order
-        order = orders.get("entry").execute(broker=self.broker, order_type="LIMIT")
-        order_id = order.order_id
+        order = orders.get("entry")
+        response = order.execute(broker=self.broker, order_type="LIMIT")
+        order_id = response.order_id
+        order.order_id = order_id
+        order.save_to_db()
         logger.info(f"Order placed at {self.ltp} with {order_id}")
 
     def entry(self):
@@ -176,7 +179,6 @@ class Strategy(BaseStrategy):
         """
         if not (self.can_enter):
             return
-        print('heelo', self.direction)
         if self.direction == 1:
             if self.ltp <= self.next_entry_price:
                 self._place_entry_order()
@@ -198,15 +200,15 @@ class Strategy(BaseStrategy):
                 price = target.price
                 side = target.side
 
-    def run(self, ltp:Dict[str, float]):
+    def run(self, ltp: Dict[str, float]):
         """
         run this strategy; entry point to run the strategy
         ltp
             last price as a dictionary
         """
-        for k,v in ltp.items():
+        for k, v in ltp.items():
             if k == self.symbol:
                 self.ltp = v
         if self.can_enter:
             self.entry()
-        self.cycle +=1
+        self.cycle += 1
