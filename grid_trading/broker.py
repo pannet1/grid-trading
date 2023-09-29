@@ -84,7 +84,7 @@ def convert_ltp_to_instruments(ltps: Dict[str, float]) -> List[Instrument]:
 
 
 class PaperBroker(ReplicaBroker):
-    broker: Zerodha  # This is always zerodha
+    broker: BROKER# This is always zerodha
     symbols: Optional[List[str]]
 
     class Config:

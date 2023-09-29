@@ -46,6 +46,7 @@ def main():
     parameters = pd.read_csv("parameters.csv").to_dict(orient="records")
     strategies = []
     broker = paper_broker()
+    datafeed = broker # overriding datafeed here
     connection = get_database()
     for params in parameters:
         try:
@@ -60,7 +61,7 @@ def main():
     # We are mimicking broker here and seeding prices
     broker.symbols = symbols
     # Change this method to run2 if you are using redis ltp
-    broker.run2()
+    broker.run()
     print(connection)
     print(broker.ltp(symbols))
 
@@ -70,7 +71,7 @@ def main():
         strategy.run(ltps)
         strategy.update_next_entry_price()
 
-    for i in range(1000):
+    for i in range(10000):
         ltps = broker.ltp(symbols)
         for strategy in strategies:
             strategy.run(ltps)
@@ -85,14 +86,6 @@ def main():
 
 
 if __name__ == "__main__":
-    """
-    config_file = os.path.join(
-        os.environ["HOME"], "systemtrader", "config.yaml")
-    with open(config_file) as f:
-        config = yaml.safe_load(f)[0]["config"]
-        datafeed = Zerodha(**config)
-        datafeed.authenticate()
-    """
     datafeed = RedisClient()
     datafeed.authenticate()
     main()
