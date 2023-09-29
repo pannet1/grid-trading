@@ -9,7 +9,7 @@ from omspy.order import create_db
 from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker
-from omspy.brokers.zerodha import Zerodha
+from omspy_brokers.finvasia import Finvasia
 import time
 from redis_client import RedisClient
 
@@ -45,8 +45,19 @@ def get_all_symbols(strategies: List[Strategy]) -> List[str]:
 def main():
     parameters = pd.read_csv("parameters.csv").to_dict(orient="records")
     strategies = []
-    broker = paper_broker()
+    config_file = os.path.join(
+        os.environ["HOME"], "systemtrader", "config.yaml")
+    with open(config_file) as f:
+        config = yaml.safe_load(f)[0]["config"]
+        print(config)
+        broker = Finvasia(**config)
+        broker.authenticate()
+        print(dir(broker.finvasia))
+
+    datafeed = RedisClient()
+    datafeed.authenticate()
     connection = get_database()
+    print(connection)
     for params in parameters:
         try:
             p = {k: v for k, v in params.items() if pd.notnull(v)}
@@ -57,25 +68,22 @@ def main():
         except Exception as e:
             logger.error(e)
     symbols = get_all_symbols(strategies)
-    # We are mimicking broker here and seeding prices
-    broker.symbols = symbols
-    # Change this method to run2 if you are using redis ltp
-    broker.run2()
-    print(connection)
-    print(broker.ltp(symbols))
+    print(datafeed.ltp(symbols))
 
     # Initial update for the next entry prices
-    ltps = broker.ltp(symbols)
+    ltps = datafeed.ltp(symbols)
     for strategy in strategies:
         strategy.run(ltps)
         strategy.update_next_entry_price()
 
     for i in range(1000):
-        ltps = broker.ltp(symbols)
+        ltps = datafeed.ltp(symbols)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
         if i % 5 == 0:
+            orders = broker.orders
+            print(orders)
             orders_dict = {k: v.dict() for k, v in broker.orders.items()}
             for strategy in strategies:
                 for order in strategy.orders:
@@ -85,14 +93,4 @@ def main():
 
 
 if __name__ == "__main__":
-    """
-    config_file = os.path.join(
-        os.environ["HOME"], "systemtrader", "config.yaml")
-    with open(config_file) as f:
-        config = yaml.safe_load(f)[0]["config"]
-        datafeed = Zerodha(**config)
-        datafeed.authenticate()
-    """
-    datafeed = RedisClient()
-    datafeed.authenticate()
     main()
