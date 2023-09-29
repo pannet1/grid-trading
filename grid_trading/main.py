@@ -8,9 +8,10 @@ from strategy import Strategy
 from omspy.order import create_db
 from logzero import logger
 from sqlite_utils import Database
-from broker import paper_broker
+from broker import paper_broker, PaperBroker
 import time
 from redis_client import RedisClient
+
 try:
     from omspy_brokers.finvasia import Finvasia
 except Exception as e:
@@ -18,7 +19,7 @@ except Exception as e:
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
-MODE = "PROD" # change mode to PROD when using in production
+MODE = "PROD"  # change mode to PROD when using in production
 
 
 def get_database() -> Optional[Database]:
@@ -51,15 +52,17 @@ def main():
     strategies = []
     if MODE == "DEV":
         broker = paper_broker()
-        datafeed = broker 
+        datafeed = broker
     elif MODE == "PROD":
-        config_file = os.path.join(
-            os.environ["HOME"],  "config2.yaml")
+        config_file = os.path.join(os.environ["HOME"], "config2.yaml")
         with open(config_file) as f:
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
             broker.authenticate()
-            datafeed = paper_broker()
+            datafeed = RedisClient()
+            datafeed.authenticate()
+            # Would use this on my machine; not recommended
+            # datafeed = paper_broker()
     else:
         logger.error(f"Invalid {MODE}; exiting program")
         return
@@ -76,12 +79,10 @@ def main():
             logger.error(e)
     symbols = get_all_symbols(strategies)
     # We are mimicking broker here and seeding prices
-    if MODE == "PROD":
+    if type(datafeed) == PaperBroker:
         datafeed.symbols = symbols
-        print(datafeed)
-        # Change this method to run2 if you are using redis ltp
-        datafeed.run()
-    print(connection)
+
+    print(connection, symbols)
     print(datafeed.ltp(symbols))
 
     # Initial update for the next entry prices
@@ -91,22 +92,17 @@ def main():
         strategy.update_next_entry_price()
 
     for i in range(10000):
+        # This would be run only when it is mock instance
+        if isinstance(datafeed, PaperBroker):
+            datafeed.run()
         ltps = datafeed.ltp(symbols)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
         if i % 5 == 0:
             orders = broker.orders
-            print(orders)
-            orders_dict = {k: v.dict() for k, v in broker.orders.items()}
-            for strategy in strategies:
-                for order in strategy.orders:
-                    # Update order data from broker
-                    # TODO: Correctly implement for paper broker
-                    order.update_orders(orders_dict)
+            # TODO: Update orders
 
 
 if __name__ == "__main__":
-    datafeed = RedisClient()
-    datafeed.authenticate()
     main()
