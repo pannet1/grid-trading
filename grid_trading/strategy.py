@@ -120,11 +120,11 @@ class Strategy(BaseStrategy):
     def _create_target_order(self) -> Optional[Order]:
         if self.direction == 1:
             quantity = self.buy_quantity
-            trigger_price = self.next_entry_price + self.buy_target
+            price = self.ltp + self.buy_target
             side = "sell"
         elif self.direction == -1:
             quantity = self.sell_quantity
-            trigger_price = self.next_entry_price - self.sell_target
+            price = self.ltp - self.sell_target
             side = "buy"
         else:
             logger.warning("No direction yet; so order cannot be created")
@@ -133,8 +133,8 @@ class Strategy(BaseStrategy):
             symbol=self.symbol,
             side=side,
             quantity=quantity,
-            trigger_price=trigger_price,
-            price=0.0,
+            trigger_price=price,
+            price=price,
             order_type="LIMIT",
         )
         return order

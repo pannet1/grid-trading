@@ -160,9 +160,10 @@ def test_strategy_create_entry_order_sell(strategy_sell):
 
 
 def test_strategy_create_target_order_buy(strategy_buy):
+    strategy_buy.ltp = 98
     order = strategy_buy._create_target_order()
     assert order.trigger_price == 101
-    assert order.price == 0
+    assert order.price == 101
     assert order.order_type == "LIMIT"
     assert order.quantity == 10
     assert order.side == "sell"
@@ -171,13 +172,13 @@ def test_strategy_create_target_order_buy(strategy_buy):
     order = strategy_buy._create_target_order()
     assert order.quantity == 20
     assert order.trigger_price == 102
-    assert order.price == 0
+    assert order.price == 102
 
 
 def test_strategy_create_target_order_sell(strategy_sell):
+    strategy_sell.ltp = 102
     order = strategy_sell._create_target_order()
-    assert order.trigger_price == 99
-    assert order.price == 0
+    assert order.trigger_price == order.price == 99
     assert order.order_type == "LIMIT"
     assert order.quantity == 10
     assert order.side == "buy"
@@ -185,12 +186,14 @@ def test_strategy_create_target_order_sell(strategy_sell):
     strategy_sell.sell_target = 4
     order = strategy_sell._create_target_order()
     assert order.quantity == 20
-    assert order.trigger_price == 98
+    assert order.trigger_price == order.price == 98
 
 
 def test_strategy_create_order(strategy_buy, strategy_sell):
     buy = strategy_buy
     sell = strategy_sell
+    buy.ltp = 98
+    sell.ltp = 102
     buy.create_order()
     sell.create_order()
     assert len(buy.orders) == 1
