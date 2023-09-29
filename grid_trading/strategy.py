@@ -7,7 +7,7 @@ import json
 from logzero import logger
 from sqlite_utils import Database
 
-from omspy.simulation.models import OrderType
+from omspy.simulation.models import OrderType, VOrder
 
 
 class BaseStrategy(BaseModel):
@@ -143,6 +143,10 @@ class Strategy(BaseStrategy):
         com = CompoundOrder(broker=self.broker, connection=self.connection)
         entry = self._create_entry_order()
         target = self._create_target_order()
+        info = json.dumps(
+                dict(ltp=self.ltp, expected_entry=self.next_entry_price, target=target.price))
+        entry.JSON = info
+        target.JSON = info
         if entry and target:
             com.add(order=entry, key="entry")
             com.add(order=target, key="target")
@@ -171,9 +175,12 @@ class Strategy(BaseStrategy):
         # Execute the actual order
         order = orders.get("entry")
         response = order.execute(broker=self.broker, order_type="LIMIT")
-        order_id = response.order_id
-        order.order_id = order_id
-        order.save_to_db()
+        if type(order) == VOrder:
+            order_id = response.order_id
+            order.order_id = order_id
+            order.save_to_db()
+        else:
+            order_id = response
         logger.info(f"Order placed at {self.ltp} with {order_id}")
 
     def entry(self):

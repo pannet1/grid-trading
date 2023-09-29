@@ -265,3 +265,21 @@ def test_entry_sell_strategy(strategy_sell):
 
     # Check order limit prices
     assert [x.get("entry").price for x in s.orders] == [102, 104, 106, 108, 110]
+
+def test_strategy_json_info(strategy_buy, strategy_sell):
+    buy = strategy_buy
+    sell = strategy_sell
+    buy.ltp = 95
+    sell.ltp = 110
+    order = buy.create_order()
+    for o in order.orders:
+        assert json.loads(o.JSON) == dict(ltp=95, target=98, expected_entry=98)
+    order = sell.create_order()
+    for o in order.orders:
+        assert json.loads(o.JSON) == dict(ltp=110, target=107, expected_entry=102)
+
+def test_strategy_price_jump(strategy_buy, strategy_sell):
+    """
+    check orders when the price jumps
+    """
+    pass
