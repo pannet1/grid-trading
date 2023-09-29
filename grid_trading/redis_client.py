@@ -1,5 +1,6 @@
 from logzero import logger as logging
 import redis
+from time import sleep
 
 r = redis.Redis(host='localhost', port=6379)
 
@@ -18,30 +19,35 @@ class RedisClient:
 
     def get_one(self, itemid: int) -> None:
         error_count = 0
-        retry = 15
+        retry = 5
         attempt = 0
         while True:
             try:
-                ltp = r.hget(itemid, "last_price")
-                if not ltp:
-                    logging.debug(f"not able to get {itemid}")
+                quote = r.hget(itemid, "last_price")
+                if not quote:
                     r.hset(itemid, "last_price",  -1)
-                    r.expire(itemid, 15)
+                    r.expire(itemid, retry)
                     continue
-                elif float(ltp.decode('utf-8')) < 0:
-                    logging.debug(f"waiting for server {ltp}")
+                elif float(quote.decode('utf-8')) < 0:
                     if attempt <= retry:
+                        logging.debug(
+                            f"waiting for server {itemid} "
+                            f" {float(quote.decode('utf-8'))} "
+                        )
                         attempt += 1
+                        sleep(attempt * 0.1)
                         continue
                     else:
-                        ltp = None
+                        logging.debug(f"given up {quote}")
+                        quote = None
                         break
                 else:
-                    ltp = float(ltp.decode('utf-8'))
-                    logging.debug(f"found {itemid=}{ltp}")
+                    quote = float(quote.decode('utf-8'))
                     break
             except ValueError as v:
                 logging.debug(f"value error {v}")
+                quote = None
+                break
             except Exception as e:
                 error_count += 1
                 print(e)
@@ -49,11 +55,11 @@ class RedisClient:
                     "Error #%d: %s; retrying",
                     error_count, itemid
                 )
-                ltp = None
+                quote = None
                 break
-        return ltp
+        return quote
 
-    def get_ltp(self, lst_exchsym):
+    def ltp(self, lst_exchsym):
         dct = {}
         new_lst = []
         if isinstance(lst_exchsym, list):
@@ -63,3 +69,10 @@ class RedisClient:
         dct = {lst_exchsym[i]: new_lst[i] for i in range(len(new_lst))}
         dct = {k: v for k, v in dct.items() if v is not None}
         return dct
+
+
+if __name__ == "__main__":
+    cl = RedisClient()
+    lst = ['NSE:CANBK', 'NSE:HINDALCO', 'NSE:HDFCBANK']
+    resp = cl.ltp(lst)
+    print(resp)

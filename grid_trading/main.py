@@ -9,12 +9,16 @@ from omspy.order import create_db
 from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker
-from omspy.brokers.zerodha import Zerodha
 import time
 from redis_client import RedisClient
+try:
+    from omspy_brokers.finvasia import Finvasia
+except Exception as e:
+    from omspy.brokers.finvasia import Finvasia
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
+MODE = "PROD" # change mode to PROD when using in production
 
 
 def get_database() -> Optional[Database]:
@@ -45,8 +49,21 @@ def get_all_symbols(strategies: List[Strategy]) -> List[str]:
 def main():
     parameters = pd.read_csv("parameters.csv").to_dict(orient="records")
     strategies = []
-    broker = paper_broker()
-    datafeed = broker # overriding datafeed here
+    if MODE == "DEV":
+        broker = paper_broker()
+        datafeed = broker 
+    elif MODE == "PROD":
+        config_file = os.path.join(
+            os.environ["HOME"],  "config2.yaml")
+        with open(config_file) as f:
+            config = yaml.safe_load(f)[0]["config"]
+            broker = Finvasia(**config)
+            broker.authenticate()
+            datafeed = paper_broker()
+    else:
+        logger.error(f"Invalid {MODE}; exiting program")
+        return
+
     connection = get_database()
     for params in parameters:
         try:
@@ -59,24 +76,28 @@ def main():
             logger.error(e)
     symbols = get_all_symbols(strategies)
     # We are mimicking broker here and seeding prices
-    broker.symbols = symbols
-    # Change this method to run2 if you are using redis ltp
-    broker.run()
+    if MODE == "PROD":
+        datafeed.symbols = symbols
+        print(datafeed)
+        # Change this method to run2 if you are using redis ltp
+        datafeed.run()
     print(connection)
-    print(broker.ltp(symbols))
+    print(datafeed.ltp(symbols))
 
     # Initial update for the next entry prices
-    ltps = broker.ltp(symbols)
+    ltps = datafeed.ltp(symbols)
     for strategy in strategies:
         strategy.run(ltps)
         strategy.update_next_entry_price()
 
     for i in range(10000):
-        ltps = broker.ltp(symbols)
+        ltps = datafeed.ltp(symbols)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
         if i % 5 == 0:
+            orders = broker.orders
+            print(orders)
             orders_dict = {k: v.dict() for k, v in broker.orders.items()}
             for strategy in strategies:
                 for order in strategy.orders:
