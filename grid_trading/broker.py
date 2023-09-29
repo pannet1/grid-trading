@@ -28,8 +28,7 @@ def ltp_from_server(symbols: List[str]) -> Dict[str, float]:
 
 
 def get_actual_broker():
-    config_file = os.path.join(
-        os.environ["HOME"], "systemtrader", "config.yaml")
+    config_file = os.path.join(os.environ["HOME"], "systemtrader", "config.yaml")
     with open(config_file) as f:
         config = yaml.safe_load(f)[0]["config"]
         broker = BROKER(**config)
@@ -86,7 +85,7 @@ def convert_ltp_to_instruments(ltps: Dict[str, float]) -> List[Instrument]:
 
 
 class PaperBroker(ReplicaBroker):
-    broker: BROKER# This is always zerodha
+    broker: BROKER
     symbols: Optional[List[str]]
 
     class Config:
@@ -95,9 +94,10 @@ class PaperBroker(ReplicaBroker):
     def __init__(self, **data):
         super().__init__(**data)
 
-    def run(self):
+    def _zrun(self):
         """
         A simple runner for automation
+        expects zerodha broker
         """
         quotes = self.broker.quote(self.symbols)
         instruments = convert_dict_to_instrument(quotes)
@@ -105,9 +105,10 @@ class PaperBroker(ReplicaBroker):
         # Mimicks broker order fill based on ltp
         self.run_fill()
 
-    def run2(self):
+    def _frun(self):
         """
         Run this method if use ltp from redis server
+        expects any broker
         """
         ltp = ltp_from_server(self.symbols)
         instruments = convert_ltp_to_instruments(ltp)
@@ -115,13 +116,18 @@ class PaperBroker(ReplicaBroker):
         # Mimicks broker order fill based on ltp
         self.run_fill()
 
+    def run(self):
+        if type(self.broker) == Zerodha:
+            self._zrun()
+        else:
+            self._frun()
+
     def ltp(self, symbols: List[str]) -> Dict[str, float]:
         """
         return the last price for the list of given symbols
         """
         symbols = [s[4:] for s in symbols]
-        dct = {k: v.last_price for k, v in self.instruments.items()
-               if k in symbols}
+        dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
         return dct
 
 

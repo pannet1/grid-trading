@@ -144,7 +144,10 @@ class Strategy(BaseStrategy):
         entry = self._create_entry_order()
         target = self._create_target_order()
         info = json.dumps(
-                dict(ltp=self.ltp, expected_entry=self.next_entry_price, target=target.price))
+            dict(
+                ltp=self.ltp, expected_entry=self.next_entry_price, target=target.price
+            )
+        )
         entry.JSON = info
         target.JSON = info
         if entry and target:
@@ -166,6 +169,21 @@ class Strategy(BaseStrategy):
         else:
             logger.debug("Entry price still not configured")
 
+    def _place_one_order(self, order: Order):
+        """
+        Execute one order
+        """
+        response = order.execute(
+            broker=self.broker, order_type="LIMIT", exchange=self.exchange
+        )
+        if isinstance(response, VOrder):
+            order_id = response.order_id
+            order.order_id = order_id
+            order.save_to_db()
+        else:
+            order_id = response
+        logger.info(f"Order placed at {self.ltp} with {order_id}")
+
     def _place_entry_order(self):
         """
         Place the initial entry order and update the necessary fields
@@ -174,14 +192,7 @@ class Strategy(BaseStrategy):
         self.update_next_entry_price()
         # Execute the actual order
         order = orders.get("entry")
-        response = order.execute(broker=self.broker, order_type="LIMIT")
-        if type(order) == VOrder:
-            order_id = response.order_id
-            order.order_id = order_id
-            order.save_to_db()
-        else:
-            order_id = response
-        logger.info(f"Order placed at {self.ltp} with {order_id}")
+        self._place_one_order(order)
 
     def entry(self):
         """
