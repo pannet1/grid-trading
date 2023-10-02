@@ -41,7 +41,8 @@ class BaseStrategy(BaseModel):
 
     @property
     def can_enter(self) -> bool:
-        methods = [attr for attr in dir(self) if attr.startswith("before_entry")]
+        methods = [attr for attr in dir(
+            self) if attr.startswith("before_entry")]
         checks = [getattr(self, attr)() for attr in methods]
         return all(checks)
 

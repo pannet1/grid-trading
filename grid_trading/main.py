@@ -13,9 +13,9 @@ import time
 from redis_client import RedisClient
 
 try:
-    from omspy_brokers.finvasia import Finvasia
-except Exception as e:
     from omspy.brokers.finvasia import Finvasia
+except Exception as e:
+    print(e)
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
@@ -100,7 +100,8 @@ def main():
             strategy.run(ltps)
         time.sleep(1)
         if i % 5 == 0:
-            orders = broker.orders
+            # orders = broker.orders
+            pass
             # TODO: Update orders
 
 

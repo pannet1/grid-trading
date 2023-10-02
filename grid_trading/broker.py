@@ -13,9 +13,9 @@ from redis_client import RedisClient
 
 
 try:
-    from omspy_brokers.finvasia import Finvasia
+    from omspy.brokers.finvasia import Finvasia
 except ImportError:
-    logger.error("omspy_brokers not installed")
+    logger.error("omspy brokers not installed")
 
 BROKER = Zerodha
 
@@ -28,7 +28,8 @@ def ltp_from_server(symbols: List[str]) -> Dict[str, float]:
 
 
 def get_actual_broker():
-    config_file = os.path.join(os.environ["HOME"], "systemtrader", "config.yaml")
+    config_file = os.path.join(
+        os.environ["HOME"], "systemtrader", "config.yaml")
     with open(config_file) as f:
         config = yaml.safe_load(f)[0]["config"]
         broker = BROKER(**config)
@@ -127,7 +128,8 @@ class PaperBroker(ReplicaBroker):
         return the last price for the list of given symbols
         """
         symbols = [s[4:] for s in symbols]
-        dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
+        dct = {k: v.last_price for k, v in self.instruments.items()
+               if k in symbols}
         return dct
 
 
