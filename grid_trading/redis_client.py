@@ -68,6 +68,7 @@ class RedisClient:
                 new_lst.append(quote)
         dct = {lst_exchsym[i]: new_lst[i] for i in range(len(new_lst))}
         dct = {k: v for k, v in dct.items() if v is not None}
+        dct = {k[4:]: v for k, v in dct.items()}
         return dct
 
 

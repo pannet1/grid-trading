@@ -13,9 +13,9 @@ import time
 from redis_client import RedisClient
 
 try:
-    from omspy_brokers.finvasia import Finvasia
-except Exception as e:
     from omspy.brokers.finvasia import Finvasia
+except Exception as e:
+    print(e)
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
