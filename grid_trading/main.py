@@ -62,7 +62,7 @@ def main():
             datafeed = RedisClient()
             datafeed.authenticate()
             # Would use this on my machine; not recommended
-            # datafeed = paper_broker()
+            #datafeed = paper_broker()
     else:
         logger.error(f"Invalid {MODE}; exiting program")
         return
@@ -79,14 +79,15 @@ def main():
             logger.error(e)
     symbols = get_all_symbols(strategies)
     # We are mimicking broker here and seeding prices
-    if type(datafeed) == PaperBroker:
+    if isinstance(datafeed, PaperBroker):
         datafeed.symbols = symbols
+        datafeed.run()
 
-    print(connection, symbols)
-    print(datafeed.ltp(symbols))
+    print(connection)
 
     # Initial update for the next entry prices
     ltps = datafeed.ltp(symbols)
+    print(ltps)
     for strategy in strategies:
         strategy.run(ltps)
         strategy.update_next_entry_price()
@@ -100,7 +101,7 @@ def main():
             strategy.run(ltps)
         time.sleep(1)
         if i % 5 == 0:
-            orders = broker.orders
+            pass
             # TODO: Update orders
 
 
