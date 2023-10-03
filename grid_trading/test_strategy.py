@@ -238,6 +238,7 @@ def test_entry_buy_strategy(strategy_buy):
         s.entry()
     # Should have placed orders till the next entry price is less than ltp
     assert len(s.orders) == 5
+    # Price jump
     for i in range(10):
         s.ltp = s.ltp + 2
         s.entry()
@@ -258,6 +259,7 @@ def test_entry_sell_strategy(strategy_sell):
     for i in range(10):
         s.entry()
     assert len(s.orders) == 1
+    # Price jump
     s.ltp = 110
     for i in range(10):
         s.entry()
@@ -278,8 +280,44 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
     for o in order.orders:
         assert json.loads(o.JSON) == dict(ltp=110, target=107, expected_entry=102)
 
-def test_strategy_price_jump(strategy_buy, strategy_sell):
+def test_strategy_price_jump_target(strategy_buy, strategy_sell):
     """
     check orders when the price jumps
     """
-    pass
+    buy = strategy_buy
+    sell = strategy_sell 
+    buy.ltp = 90
+    for i in range(10):
+        buy.entry()
+    assert len(buy.orders) == 5
+    orders = [x.get('target') for x in buy.orders]
+    assert [x.price for x in orders] == [93]*5
+
+    sell.ltp = 110
+    for i in range(10):
+        sell.entry()
+    assert len(sell.orders) == 5
+    orders = [x.get('target') for x in sell.orders]
+    assert [x.price for x in orders] == [107]*5
+
+
+def test_exit_buy(strategy_buy):
+    s = strategy_buy
+    s.run(dict(BHEL=98))
+    assert len(s.orders) == 1
+    assert all([x.order_id for x in s.orders[0].orders]) is False
+    s.run(dict(BHEL=100))
+    assert all([x.order_id for x in s.orders[0].orders]) is False
+    s.run(dict(BHEL=101))
+    assert all([x.order_id for x in s.orders[0].orders]) is True
+
+
+def test_exit_buy(strategy_sell):
+    s = strategy_sell
+    s.run(dict(BHEL=102))
+    assert len(s.orders) == 1
+    assert all([x.order_id for x in s.orders[0].orders]) is False
+    s.run(dict(BHEL=100))
+    assert all([x.order_id for x in s.orders[0].orders]) is False
+    s.run(dict(BHEL=99))
+    assert all([x.order_id for x in s.orders[0].orders]) is True

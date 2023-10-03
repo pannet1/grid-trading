@@ -217,11 +217,22 @@ class Strategy(BaseStrategy):
         for order in self.orders:
             target = order.get("target")
             if target:
-                if target.is_complete:
+                if target.order_id:
+                    # If there is an order_id, we assume the order is placed
                     pass  # Do nothing
                 else:
+                    side = target.side.lower()
                     price = target.price
-                    side = target.side
+                    if price:
+                        if side == "buy":
+                            if self.ltp <= price:
+                                self._place_one_order(target)
+                        elif side == "sell":
+                            if self.ltp >= price:
+                                self._place_one_order(target)
+                    else:
+                        logger.warning(f"No price for {target.symbol}; some error")
+
             else:
                 logger.error("No target order; something wrong")
 
@@ -236,4 +247,6 @@ class Strategy(BaseStrategy):
                 self.ltp = v
         if self.can_enter:
             self.entry()
+        self.exit()
         self.cycle += 1
+
