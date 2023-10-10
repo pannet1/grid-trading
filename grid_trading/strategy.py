@@ -97,7 +97,7 @@ class Strategy(BaseStrategy):
             if self.sell_price and self.sell_offset:
                 self._next_entry_price = self.sell_price + self.sell_offset
 
-        self.set_initial_price()
+        self.set_initial_prices()
 
     @property
     def direction(self):
@@ -119,9 +119,30 @@ class Strategy(BaseStrategy):
     def next_backward_price(self):
         return self._next_backward_price
 
-    def set_initial_price(self):
+    def set_initial_prices(self):
+        """
+        set the initial prices for initial price, backward
+        and forward prices
+        """
         if self.initial_price is None:
             self._initial_price = self.ltp
+        if self._next_forward_price is None or (self._next_backward_price is None):
+            if self.direction == 1:
+                self._next_forward_price = self._next_backward_price = self.buy_price - self.buy_offset
+            elif self.direction == -1:
+                self._next_forward_price = self._next_backward_price = self.sell_price + self.sell_offset
+
+    def set_next_prices(self):
+        """
+        Set the next forward and backward prices based on the
+        current ltp, direction and other settings
+        """
+        if self.direction == 1:
+            self._next_backward_price = max(self.next_backward_price-self.buy_offset, self.buy_offset)
+            self._next_forward_price = min(self.next_forward_price+self.buy_offset, self.buy_price)
+            pass
+        elif self.direction == -1:
+            pass
 
     def _create_entry_order(self) -> Optional[Order]:
         """
@@ -273,7 +294,7 @@ class Strategy(BaseStrategy):
         for k, v in ltp.items():
             if k == self.symbol:
                 self.ltp = v
-        self.set_initial_price()
+        self.set_initial_prices()
         if self.can_enter:
             self.entry()
         self.exit()

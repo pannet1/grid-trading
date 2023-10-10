@@ -85,18 +85,17 @@ def test_base_strategy_different_datafeed():
 def test_strategy_defaults():
     broker = FakeBroker()
     strategy = Strategy(
-        broker=broker, exchange="NSE", symbol="BHEL", side="buy", ltp=100
+        broker=broker, exchange="NSE", symbol="BHEL", side="buy", ltp=100, buy_price=101, buy_offset=2
     )
     assert strategy.symbol == "BHEL"
     assert strategy.orders == []
-    assert strategy.next_entry_price is None
     assert strategy._prices == set()
 
 
 def test_strategy_defaults_direction_side_case():
     broker = FakeBroker()
     strategy = Strategy(
-        broker=broker, exchange="NSE", symbol="BHEL", side="BUY", ltp=100
+        broker=broker, exchange="NSE", symbol="BHEL", side="BUY", ltp=100, buy_price=102, buy_offset=2
     )
     assert strategy.direction == 1
 
@@ -324,13 +323,17 @@ def test_exit_buy(strategy_sell):
     assert all([x.order_id for x in s.orders[0].orders]) is True
 
 
-def test_set_initial_price(strategy_buy, strategy_sell):
+def test_set_initial_prices(strategy_buy, strategy_sell):
     buy,sell = strategy_buy, strategy_sell
     assert buy.initial_price == 100
     assert sell.initial_price  == 100
     buy.ltp = 105
-    buy.set_initial_price()
+    buy.set_initial_prices()
     assert buy.initial_price == 100
+    assert buy.next_forward_price == 98
+    assert buy.next_backward_price == 98
+    assert sell.next_forward_price == 102
+    assert sell.next_backward_price == 102
 
 def test_set_initial_price_no_ltp(strategy_buy):
     buy = strategy_buy
@@ -339,11 +342,11 @@ def test_set_initial_price_no_ltp(strategy_buy):
     buy._initial_price = None
     buy.ltp = None
     assert buy.initial_price is None
-    buy.set_initial_price()
+    buy.set_initial_prices()
     assert buy.initial_price is None
     buy.ltp = 101
-    buy.set_initial_price()
+    buy.set_initial_prices()
     assert buy.initial_price == 101
     buy.ltp = 102
-    buy.set_initial_price()
+    buy.set_initial_prices()
     assert buy.initial_price == 101
