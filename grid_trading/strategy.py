@@ -97,6 +97,8 @@ class Strategy(BaseStrategy):
             if self.sell_price and self.sell_offset:
                 self._next_entry_price = self.sell_price + self.sell_offset
 
+        self.set_initial_price()
+
     @property
     def direction(self):
         return self._direction
@@ -271,6 +273,7 @@ class Strategy(BaseStrategy):
         for k, v in ltp.items():
             if k == self.symbol:
                 self.ltp = v
+        self.set_initial_price()
         if self.can_enter:
             self.entry()
         self.exit()

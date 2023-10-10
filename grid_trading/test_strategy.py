@@ -90,6 +90,7 @@ def test_strategy_defaults():
     assert strategy.symbol == "BHEL"
     assert strategy.orders == []
     assert strategy.next_entry_price is None
+    assert strategy._prices == set()
 
 
 def test_strategy_defaults_direction_side_case():
@@ -321,3 +322,28 @@ def test_exit_buy(strategy_sell):
     assert all([x.order_id for x in s.orders[0].orders]) is False
     s.run(dict(BHEL=99))
     assert all([x.order_id for x in s.orders[0].orders]) is True
+
+
+def test_set_initial_price(strategy_buy, strategy_sell):
+    buy,sell = strategy_buy, strategy_sell
+    assert buy.initial_price == 100
+    assert sell.initial_price  == 100
+    buy.ltp = 105
+    buy.set_initial_price()
+    assert buy.initial_price == 100
+
+def test_set_initial_price_no_ltp(strategy_buy):
+    buy = strategy_buy
+    buy.ltp = None
+    buy.initial_price == 100
+    buy._initial_price = None
+    buy.ltp = None
+    assert buy.initial_price is None
+    buy.set_initial_price()
+    assert buy.initial_price is None
+    buy.ltp = 101
+    buy.set_initial_price()
+    assert buy.initial_price == 101
+    buy.ltp = 102
+    buy.set_initial_price()
+    assert buy.initial_price == 101
