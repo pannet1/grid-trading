@@ -413,6 +413,75 @@ def test_set_next_prices_buy(strategy_buy):
     s.set_next_prices()
     assert s.next_backward_price == 98
     assert s.next_forward_price == 100
+    # price goes up
+    s.set_next_prices(price=104)
+    assert s.next_backward_price == 98
+    assert s.next_forward_price == 100
+    #price goes down
+    s.ltp = 98
+    s.set_next_prices()
+    assert s.next_backward_price == 98
+    assert s.next_forward_price == 100
+    s.ltp = 97
     s.set_next_prices()
     assert s.next_backward_price == 96
     assert s.next_forward_price == 98
+    s.ltp = 95.4
+    s.set_next_prices()
+    assert s.next_backward_price == 94
+    assert s.next_forward_price == 96
+    s.set_next_prices(price=97)
+    assert s.next_backward_price == 96
+    assert s.next_forward_price == 98
+
+
+def test_set_next_prices_sell(strategy_sell):
+    s = strategy_sell
+    s.set_next_prices()
+    s.set_next_prices()
+    assert s.next_forward_price == 102
+    assert s.next_backward_price == 100
+    s.set_next_prices(price=103)
+    assert s.next_forward_price == 104
+    assert s.next_backward_price == 102
+    s.set_next_prices(price=109)
+    assert s.next_forward_price == 106
+    assert s.next_backward_price == 104
+    s.ltp = 103
+    s.set_next_prices()
+    assert s.next_forward_price == 104
+    assert s.next_backward_price == 102
+
+
+def test_next_prices_buy_outside_price(strategy_buy):
+    s = strategy_buy
+    for ltp in range(104,112):
+        s.ltp = ltp
+        s.set_next_prices()
+        assert s.next_forward_price == 100
+        assert s.next_backward_price == 98
+    s.set_next_prices(price=97)
+    assert s.next_forward_price == 98
+    assert s.next_backward_price == 96
+    s.set_next_prices(price=97)
+    s.ltp = 103
+    s.set_next_prices()
+    assert s.next_forward_price == 100
+    assert s.next_backward_price == 98
+
+
+def test_next_prices_sell_outside_price(strategy_sell):
+    s = strategy_sell
+    for ltp in range(80,96):
+        s.ltp = ltp
+        s.set_next_prices()
+        assert s.next_forward_price == 102
+        assert s.next_backward_price == 100
+    s.set_next_prices(price=103)
+    assert s.next_forward_price == 104
+    assert s.next_backward_price == 102
+    s.ltp = 97
+    s.set_next_prices()
+    assert s.next_forward_price == 102
+    assert s.next_backward_price == 100
+

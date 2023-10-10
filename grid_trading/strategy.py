@@ -145,27 +145,30 @@ class Strategy(BaseStrategy):
                         self._next_backward_price + self.sell_offset
                     )
 
-    def set_next_prices(self):
+    def set_next_prices(self, price:Optional[float]=None):
         """
         Set the next forward and backward prices based on the
         current ltp, direction and other settings
         """
+        if price is None:
+            price = self.ltp
         if self.direction == 1:
-            self._next_forward_price = min(
-                self.next_forward_price + self.buy_offset,
-                self.buy_price,
-                self.next_backward_price,
-            )
-            self._next_backward_price = max(
-                self.next_backward_price - self.buy_offset, self.buy_offset
-            )
+            if price < self.next_backward_price:
+                self._next_forward_price = self.next_backward_price
+                self._next_backward_price -= self.buy_offset
+            elif price > self.next_forward_price:
+                self._next_forward_price = min(
+                    self.next_forward_price + self.buy_offset,
+                    self.buy_price,
+                )
+                self._next_backward_price = self.next_forward_price - self.buy_offset
         elif self.direction == -1:
-            self._next_backward_price = max(
-                self.next_backward_price - self.sell_offset, self.sell_price
-            )
-            self._next_forward_price = min(
-                self.next_forward_price + self.sell_offset, self.sell_stop_price
-            )
+            if price < self.next_backward_price:
+                self._next_backward_price = max(self.sell_price, self.next_backward_price-self.sell_offset)
+                self._next_forward_price = self.next_backward_price + self.sell_offset
+            elif price > self.next_forward_price:
+                self._next_backward_price = self.next_forward_price
+                self._next_forward_price += self.sell_offset
 
     def _create_entry_order(self) -> Optional[Order]:
         """
