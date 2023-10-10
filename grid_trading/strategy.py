@@ -1,7 +1,7 @@
 from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional, Dict, Set
 from collections import Counter
 import json
 from logzero import logger
@@ -67,13 +67,22 @@ class Strategy(BaseStrategy):
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
     orders: Optional[List[CompoundOrder]]
-    _direction: Optional[int]
-    _next_entry_price: Optional[float]
+    _direction: Optional[int] = PrivateAttr()
+    _next_entry_price: Optional[float] = PrivateAttr()
+    _initial_price: Optional[float] = PrivateAttr()
+    _next_forward_price: Optional[float] = PrivateAttr()
+    _next_backward_price: Optional[float] = PrivateAttr()
+    _prices:set = PrivateAttr()
 
     def __init__(self, **data):
         super().__init__(**data)
         self.orders = []
+        self._prices = set()
         self._next_entry_price = None
+        self._direction = None
+        self._initial_price = None
+        self._next_backward_price = None
+        self._next_forward_price = None
         if str(self.side).lower() == "buy":
             self._direction = 1
         elif str(self.side).lower() == "sell":
@@ -95,6 +104,22 @@ class Strategy(BaseStrategy):
     @property
     def next_entry_price(self):
         return self._next_entry_price
+
+    @property
+    def initial_price(self):
+        return self._initial_price
+
+    @property
+    def next_forward_price(self):
+        return self._next_forward_price
+
+    @property
+    def next_backward_price(self):
+        return self._next_backward_price
+
+    def set_initial_price(self):
+        if self.initial_price is None:
+            self._initial_price = self.ltp
 
     def _create_entry_order(self) -> Optional[Order]:
         """
