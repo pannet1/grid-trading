@@ -5,6 +5,16 @@ from copy import deepcopy
 
 
 @pytest.fixture
+def strategy_args():
+    broker = FakeBroker()
+    return dict(
+        broker=broker,
+        exchange="NSE",
+        symbol="BHEL",
+    )
+
+
+@pytest.fixture
 def strategy_buy():
     broker = FakeBroker()
     return Strategy(
@@ -85,7 +95,13 @@ def test_base_strategy_different_datafeed():
 def test_strategy_defaults():
     broker = FakeBroker()
     strategy = Strategy(
-        broker=broker, exchange="NSE", symbol="BHEL", side="buy", ltp=100, buy_price=101, buy_offset=2
+        broker=broker,
+        exchange="NSE",
+        symbol="BHEL",
+        side="buy",
+        ltp=100,
+        buy_price=101,
+        buy_offset=2,
     )
     assert strategy.symbol == "BHEL"
     assert strategy.orders == []
@@ -95,7 +111,13 @@ def test_strategy_defaults():
 def test_strategy_defaults_direction_side_case():
     broker = FakeBroker()
     strategy = Strategy(
-        broker=broker, exchange="NSE", symbol="BHEL", side="BUY", ltp=100, buy_price=102, buy_offset=2
+        broker=broker,
+        exchange="NSE",
+        symbol="BHEL",
+        side="BUY",
+        ltp=100,
+        buy_price=102,
+        buy_offset=2,
     )
     assert strategy.direction == 1
 
@@ -268,6 +290,7 @@ def test_entry_sell_strategy(strategy_sell):
     # Check order limit prices
     assert [x.get("entry").price for x in s.orders] == [102, 104, 106, 108, 110]
 
+
 def test_strategy_json_info(strategy_buy, strategy_sell):
     buy = strategy_buy
     sell = strategy_sell
@@ -280,25 +303,26 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
     for o in order.orders:
         assert json.loads(o.JSON) == dict(ltp=110, target=107, expected_entry=102)
 
+
 def test_strategy_price_jump_target(strategy_buy, strategy_sell):
     """
     check orders when the price jumps
     """
     buy = strategy_buy
-    sell = strategy_sell 
+    sell = strategy_sell
     buy.ltp = 90
     for i in range(10):
         buy.entry()
     assert len(buy.orders) == 5
-    orders = [x.get('target') for x in buy.orders]
-    assert [x.price for x in orders] == [93]*5
+    orders = [x.get("target") for x in buy.orders]
+    assert [x.price for x in orders] == [93] * 5
 
     sell.ltp = 110
     for i in range(10):
         sell.entry()
     assert len(sell.orders) == 5
-    orders = [x.get('target') for x in sell.orders]
-    assert [x.price for x in orders] == [107]*5
+    orders = [x.get("target") for x in sell.orders]
+    assert [x.price for x in orders] == [107] * 5
 
 
 def test_exit_buy(strategy_buy):
@@ -324,18 +348,19 @@ def test_exit_buy(strategy_sell):
 
 
 def test_set_initial_prices(strategy_buy, strategy_sell):
-    buy,sell = strategy_buy, strategy_sell
+    buy, sell = strategy_buy, strategy_sell
     assert buy.initial_price == 100
-    assert sell.initial_price  == 100
+    assert sell.initial_price == 100
     buy.ltp = 105
     buy.set_initial_prices()
     assert buy.initial_price == 100
-    assert buy.next_forward_price == 98
+    assert buy.next_forward_price == 100
     assert buy.next_backward_price == 98
     assert sell.next_forward_price == 102
-    assert sell.next_backward_price == 102
+    assert sell.next_backward_price == 100
 
-def test_set_initial_price_no_ltp(strategy_buy):
+
+def test_set_initial_prices_no_ltp(strategy_buy):
     buy = strategy_buy
     buy.ltp = None
     buy.initial_price == 100
@@ -350,3 +375,44 @@ def test_set_initial_price_no_ltp(strategy_buy):
     buy.ltp = 102
     buy.set_initial_prices()
     assert buy.initial_price == 101
+
+
+def test_set_initial_prices_buy(strategy_args):
+    s = Strategy(**strategy_args, side="buy", buy_price=100, buy_offset=2, ltp=100)
+    assert s.initial_price == 100
+    assert s.next_forward_price
+    assert s.next_backward_price == 98
+    s = Strategy(**strategy_args, side="buy", buy_price=100, buy_offset=2, ltp=107)
+    assert s.initial_price == 107
+    assert s.next_forward_price == 100
+    assert s.next_backward_price == 98
+    s = Strategy(**strategy_args, side="buy", buy_price=100, buy_offset=2, ltp=94)
+    assert s.initial_price == 94
+    assert s.next_forward_price == 94
+    assert s.next_backward_price == 92
+
+
+def test_set_initial_prices_sell(strategy_args):
+    s = Strategy(**strategy_args, side="sell", sell_price=100, sell_offset=2, ltp=100)
+    assert s.initial_price == 100
+    assert s.next_forward_price == 102
+    assert s.next_backward_price == 100
+    s = Strategy(**strategy_args, side="sell", sell_price=100, sell_offset=2, ltp=107)
+    assert s.initial_price == 107
+    assert s.next_forward_price == 107
+    assert s.next_backward_price == 105
+
+    s = Strategy(**strategy_args, side="sell", sell_price=100, sell_offset=2, ltp=97)
+    assert s.initial_price == 97
+    assert s.next_forward_price == 102
+    assert s.next_backward_price == 100
+
+
+def test_set_next_prices_buy(strategy_buy):
+    s = strategy_buy
+    s.set_next_prices()
+    assert s.next_backward_price == 98
+    assert s.next_forward_price == 100
+    s.set_next_prices()
+    assert s.next_backward_price == 96
+    assert s.next_forward_price == 98

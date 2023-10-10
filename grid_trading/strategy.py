@@ -41,8 +41,7 @@ class BaseStrategy(BaseModel):
 
     @property
     def can_enter(self) -> bool:
-        methods = [attr for attr in dir(
-            self) if attr.startswith("before_entry")]
+        methods = [attr for attr in dir(self) if attr.startswith("before_entry")]
         checks = [getattr(self, attr)() for attr in methods]
         return all(checks)
 
@@ -72,7 +71,7 @@ class Strategy(BaseStrategy):
     _initial_price: Optional[float] = PrivateAttr()
     _next_forward_price: Optional[float] = PrivateAttr()
     _next_backward_price: Optional[float] = PrivateAttr()
-    _prices:set = PrivateAttr()
+    _prices: set = PrivateAttr()
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -127,10 +126,24 @@ class Strategy(BaseStrategy):
         if self.initial_price is None:
             self._initial_price = self.ltp
         if self._next_forward_price is None or (self._next_backward_price is None):
-            if self.direction == 1:
-                self._next_forward_price = self._next_backward_price = self.buy_price - self.buy_offset
-            elif self.direction == -1:
-                self._next_forward_price = self._next_backward_price = self.sell_price + self.sell_offset
+            price = self._initial_price
+            if price:
+                if self.direction == 1:
+                    if price >= self.buy_price:
+                        self._next_forward_price = self.buy_price
+                    else:
+                        self._next_forward_price = price
+                    self._next_backward_price = (
+                        self._next_forward_price - self.buy_offset
+                    )
+                elif self.direction == -1:
+                    if price <= self.sell_price:
+                        self._next_backward_price = self.sell_price
+                    else:
+                        self._next_backward_price = price - self.sell_offset
+                    self._next_forward_price = (
+                        self._next_backward_price + self.sell_offset
+                    )
 
     def set_next_prices(self):
         """
@@ -138,11 +151,21 @@ class Strategy(BaseStrategy):
         current ltp, direction and other settings
         """
         if self.direction == 1:
-            self._next_backward_price = max(self.next_backward_price-self.buy_offset, self.buy_offset)
-            self._next_forward_price = min(self.next_forward_price+self.buy_offset, self.buy_price)
-            pass
+            self._next_forward_price = min(
+                self.next_forward_price + self.buy_offset,
+                self.buy_price,
+                self.next_backward_price,
+            )
+            self._next_backward_price = max(
+                self.next_backward_price - self.buy_offset, self.buy_offset
+            )
         elif self.direction == -1:
-            pass
+            self._next_backward_price = max(
+                self.next_backward_price - self.sell_offset, self.sell_price
+            )
+            self._next_forward_price = min(
+                self.next_forward_price + self.sell_offset, self.sell_stop_price
+            )
 
     def _create_entry_order(self) -> Optional[Order]:
         """
@@ -299,4 +322,3 @@ class Strategy(BaseStrategy):
             self.entry()
         self.exit()
         self.cycle += 1
-
