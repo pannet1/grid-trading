@@ -19,7 +19,7 @@ except Exception as e:
 
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
-MODE = "PROD"  # change mode to PROD when using in production
+MODE = "DEV"  # change mode to PROD when using in production
 
 
 def get_database() -> Optional[Database]:
@@ -62,7 +62,7 @@ def main():
             datafeed = RedisClient()
             datafeed.authenticate()
             # Would use this on my machine; not recommended
-            #datafeed = paper_broker()
+            # datafeed = paper_broker()
     else:
         logger.error(f"Invalid {MODE}; exiting program")
         return
@@ -90,7 +90,6 @@ def main():
     print(ltps)
     for strategy in strategies:
         strategy.run(ltps)
-        strategy.update_next_entry_price()
 
     for i in range(10000):
         # This would be run only when it is mock instance

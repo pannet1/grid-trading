@@ -41,7 +41,7 @@ class BaseStrategy(BaseModel):
 
     @property
     def can_enter(self) -> bool:
-        if not(self.ltp):
+        if not (self.ltp):
             return False
         methods = [attr for attr in dir(self) if attr.startswith("before_entry")]
         checks = [getattr(self, attr)() for attr in methods]
@@ -110,6 +110,7 @@ class Strategy(BaseStrategy):
     @property
     def prices(self):
         return self._prices
+
     def before_entry_check_outside_prices(self):
         """
         Check whether the current price/ltp is outside the given range
@@ -134,7 +135,9 @@ class Strategy(BaseStrategy):
         Check whether the current price ltp is between the backward and forward price.
         If it is between them, then no trade should be taken
         """
-        if (self.ltp <= self.next_forward_price) and (self.ltp >= self.next_backward_price):
+        if (self.ltp <= self.next_forward_price) and (
+            self.ltp >= self.next_backward_price
+        ):
             return False
         else:
             return True
@@ -166,7 +169,7 @@ class Strategy(BaseStrategy):
                         self._next_backward_price + self.sell_offset
                     )
 
-    def set_next_prices(self, price:Optional[float]=None):
+    def set_next_prices(self, price: Optional[float] = None):
         """
         Set the next forward and backward prices based on the
         current ltp, direction and other settings
@@ -185,7 +188,9 @@ class Strategy(BaseStrategy):
                 self._next_backward_price = self.next_forward_price - self.buy_offset
         elif self.direction == -1:
             if price < self.next_backward_price:
-                self._next_backward_price = max(self.sell_price, self.next_backward_price-self.sell_offset)
+                self._next_backward_price = max(
+                    self.sell_price, self.next_backward_price - self.sell_offset
+                )
                 self._next_forward_price = self.next_backward_price + self.sell_offset
             elif price > self.next_forward_price:
                 self._next_backward_price = self.next_forward_price
@@ -195,7 +200,9 @@ class Strategy(BaseStrategy):
         """
         Create a order
         """
-        price = self.next_backward_price if self.direction == 1 else self.next_forward_price
+        price = (
+            self.next_backward_price if self.direction == 1 else self.next_forward_price
+        )
         if self.direction == 1:
             quantity = self.buy_quantity
             side = "buy"
@@ -242,9 +249,10 @@ class Strategy(BaseStrategy):
         target = self._create_target_order()
         info = json.dumps(
             dict(
-                ltp=self.ltp, target=target.price,
+                ltp=self.ltp,
+                target=target.price,
                 backward=self.next_backward_price,
-                forward=self.next_forward_price
+                forward=self.next_forward_price,
             )
         )
         entry.JSON = info
@@ -281,7 +289,7 @@ class Strategy(BaseStrategy):
             order.save_to_db()
         else:
             order_id = response
-        logger.info(f"Order placed at {self.ltp} with {order_id}")
+        logger.info(f"Order placed for {order.symbol} at {self.ltp} with {order_id}")
 
     def _place_entry_order(self):
         """
@@ -292,14 +300,15 @@ class Strategy(BaseStrategy):
         order = orders.get("entry")
         self._place_one_order(order)
 
-
     def entry(self):
         """
         logic to enter into a position
         """
         if not (self.can_enter):
             return
-        price = self.next_backward_price if self.direction == 1 else self.next_forward_price
+        price = (
+            self.next_backward_price if self.direction == 1 else self.next_forward_price
+        )
         if price not in self.prices:
             self._place_entry_order()
         self._prices.add(price)
