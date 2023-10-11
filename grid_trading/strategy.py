@@ -69,7 +69,6 @@ class Strategy(BaseStrategy):
     sell_stop_price: Optional[float]
     orders: Optional[List[CompoundOrder]]
     _direction: Optional[int] = PrivateAttr()
-    _next_entry_price: Optional[float] = PrivateAttr()
     _initial_price: Optional[float] = PrivateAttr()
     _next_forward_price: Optional[float] = PrivateAttr()
     _next_backward_price: Optional[float] = PrivateAttr()
@@ -79,7 +78,6 @@ class Strategy(BaseStrategy):
         super().__init__(**data)
         self.orders = []
         self._prices = set()
-        self._next_entry_price = None
         self._direction = None
         self._initial_price = None
         self._next_backward_price = None
@@ -91,22 +89,11 @@ class Strategy(BaseStrategy):
         else:
             self._direction = None
 
-        if self.direction == 1:
-            if self.buy_price and self.buy_offset:
-                self._next_entry_price = self.buy_price - self.buy_offset
-        elif self.direction == -1:
-            if self.sell_price and self.sell_offset:
-                self._next_entry_price = self.sell_price + self.sell_offset
-
         self.set_initial_prices()
 
     @property
     def direction(self):
         return self._direction
-
-    @property
-    def next_entry_price(self):
-        return self._next_entry_price
 
     @property
     def initial_price(self):
@@ -120,6 +107,9 @@ class Strategy(BaseStrategy):
     def next_backward_price(self):
         return self._next_backward_price
 
+    @property
+    def prices(self):
+        return self._prices
     def before_entry_check_outside_prices(self):
         """
         Check whether the current price/ltp is outside the given range
@@ -205,6 +195,7 @@ class Strategy(BaseStrategy):
         """
         Create a order
         """
+        price = self.next_backward_price if self.direction == 1 else self.next_forward_price
         if self.direction == 1:
             quantity = self.buy_quantity
             side = "buy"
@@ -218,7 +209,7 @@ class Strategy(BaseStrategy):
             symbol=self.symbol,
             side=side,
             quantity=quantity,
-            price=self.next_entry_price,
+            price=price,
             order_type="LIMIT",
         )
         return order
@@ -251,7 +242,9 @@ class Strategy(BaseStrategy):
         target = self._create_target_order()
         info = json.dumps(
             dict(
-                ltp=self.ltp, expected_entry=self.next_entry_price, target=target.price
+                ltp=self.ltp, target=target.price,
+                backward=self.next_backward_price,
+                forward=self.next_forward_price
             )
         )
         entry.JSON = info
@@ -295,7 +288,6 @@ class Strategy(BaseStrategy):
         Place the initial entry order and update the necessary fields
         """
         orders = self.create_order()
-        self.update_next_entry_price()
         # Execute the actual order
         order = orders.get("entry")
         self._place_one_order(order)
@@ -307,13 +299,11 @@ class Strategy(BaseStrategy):
         """
         if not (self.can_enter):
             return
-        if self.ltp and self.next_entry_price:
-            if self.direction == 1:
-                if self.ltp <= self.next_entry_price:
-                    self._place_entry_order()
-            elif self.direction == -1:
-                if self.ltp >= self.next_entry_price:
-                    self._place_entry_order()
+        price = self.next_backward_price if self.direction == 1 else self.next_forward_price
+        if price not in self.prices:
+            self._place_entry_order()
+        self._prices.add(price)
+        self.set_next_prices(price=self.ltp)
 
     def exit(self):
         """

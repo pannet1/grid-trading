@@ -143,12 +143,14 @@ def test_strategy_direction(strategy_buy, strategy_sell):
 
 def test_strategy_buy_defaults(strategy_buy):
     buy = strategy_buy
-    assert buy.next_entry_price == 98
+    assert buy.next_forward_price == 100
+    assert buy.next_backward_price == 98
 
 
 def test_strategy_sell_defaults(strategy_sell):
     sell = strategy_sell
-    assert sell.next_entry_price == 102
+    sell.next_forward_price == 102
+    sell.next_backward_price == 100
 
 
 def test_strategy_create_entry_order_buy(strategy_buy):
@@ -226,25 +228,6 @@ def test_strategy_create_order(strategy_buy, strategy_sell):
     assert sell.orders[0].get("target").trigger_price == 99
 
 
-def test_strategy_update_next_entry_price(strategy_buy, strategy_sell, strategy_both):
-    buy = strategy_buy
-    sell = strategy_sell
-    both = strategy_both
-    assert buy.update_next_entry_price() == 96
-    for i in range(3):
-        buy.update_next_entry_price()
-    assert buy.next_entry_price == 90
-    assert sell.update_next_entry_price() == 104
-    sell.sell_offset = 3
-    sell.update_next_entry_price()
-    sell.update_next_entry_price()
-    assert sell.next_entry_price == 110
-    both.update_next_entry_price()
-    assert both.update_next_entry_price() is None
-    both.update_next_entry_price()
-    assert both.update_next_entry_price() is None
-
-
 def test_entry_buy_strategy(strategy_buy):
     s = strategy_buy
     s.entry()
@@ -298,10 +281,11 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
     sell.ltp = 110
     order = buy.create_order()
     for o in order.orders:
-        assert json.loads(o.JSON) == dict(ltp=95, target=98, expected_entry=98)
+        print(o.JSON)
+        assert json.loads(o.JSON) == dict(ltp=95, target=98, backward=98, forward=100)
     order = sell.create_order()
     for o in order.orders:
-        assert json.loads(o.JSON) == dict(ltp=110, target=107, expected_entry=102)
+        assert json.loads(o.JSON) == dict(ltp=110, target=107, forward=110, backward=108)
 
 
 def test_strategy_price_jump_target(strategy_buy, strategy_sell):
