@@ -118,6 +118,29 @@ class Strategy(BaseStrategy):
     def next_backward_price(self):
         return self._next_backward_price
 
+    def before_entry_check_outside_prices(self):
+        """
+        Check whether the current price/ltp is outside the given range
+        """
+        ltp = self.ltp
+        # No trade in case of no ltp
+        if not(ltp):
+            return False
+
+        # Direction check for prices greater than entry price
+        if self.direction == 1:
+            if ltp > self.buy_price:
+                return False
+            else:
+                return True
+        elif self.direction == -1:
+            if ltp < self.sell_price:
+                return False
+            else:
+                return True
+        else:
+            return False
+
     def set_initial_prices(self):
         """
         set the initial prices for initial price, backward
@@ -268,6 +291,7 @@ class Strategy(BaseStrategy):
         # Execute the actual order
         order = orders.get("entry")
         self._place_one_order(order)
+
 
     def entry(self):
         """

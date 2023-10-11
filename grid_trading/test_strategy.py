@@ -485,3 +485,16 @@ def test_next_prices_sell_outside_price(strategy_sell):
     assert s.next_forward_price == 102
     assert s.next_backward_price == 100
 
+
+def test_before_entry_check_outside_prices(strategy_buy, strategy_sell):
+    buy, sell = strategy_buy, strategy_sell
+    assert buy.before_entry_check_outside_prices() is True
+    assert sell.before_entry_check_outside_prices() is True 
+    buy.ltp = 97.6
+    sell.ltp = 103.2
+    assert buy.before_entry_check_outside_prices() is True
+    assert sell.before_entry_check_outside_prices() is True 
+    buy.ltp = 101
+    sell.ltp = 99
+    assert buy.before_entry_check_outside_prices() is False
+    assert sell.before_entry_check_outside_prices() is False 
