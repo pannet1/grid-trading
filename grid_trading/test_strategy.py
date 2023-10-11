@@ -498,3 +498,57 @@ def test_before_entry_check_outside_prices(strategy_buy, strategy_sell):
     sell.ltp = 99
     assert buy.before_entry_check_outside_prices() is False
     assert sell.before_entry_check_outside_prices() is False 
+
+def test_before_entry_check_between_prices_buy(strategy_buy):
+    s = strategy_buy
+    assert s.before_entry_check_between_prices() is False
+    for ltp in (98,98.4,99.4,99.2,100):
+        s.ltp = ltp
+        assert s.before_entry_check_between_prices() is False
+    s.ltp = 97.6
+    assert s.before_entry_check_between_prices() is True
+    s.set_next_prices()
+    # Check after prices are changed
+    assert s.next_forward_price == 98
+    assert s.next_backward_price == 96
+    for ltp in (95.6,98.4):
+        s.ltp = ltp
+        assert s.before_entry_check_between_prices() is True
+
+def test_before_entry_check_between_prices_sell(strategy_sell):
+    s = strategy_sell
+    assert s.before_entry_check_between_prices() is False
+    for ltp in (100,100.2,100.5,101.3,102):
+        s.ltp = ltp
+        assert s.before_entry_check_between_prices() is False
+    s.ltp = 102.05
+    assert s.before_entry_check_between_prices() is True
+    s.set_next_prices()
+    assert s.next_forward_price == 104
+    assert s.next_backward_price == 102
+    for ltp in (104.6,101.4):
+        s.ltp = ltp
+        assert s.before_entry_check_between_prices() is True
+
+def test_can_enter_prices_buy(strategy_buy):
+    s = strategy_buy
+    assert s.can_enter is False
+    s.ltp = 103
+    assert s.can_enter is False
+    s.ltp = 97.9
+    assert s.can_enter is True
+
+def test_can_enter_prices_sell(strategy_sell):
+    s = strategy_sell 
+    assert s.can_enter is False
+    s.ltp = 97.9
+    assert s.can_enter is False
+    s.ltp = 103
+    assert s.can_enter is True
+
+def test_can_enter_no_ltp(strategy_buy):
+    strategy_buy.ltp = 97.9
+    strategy_buy.can_enter is True
+    strategy_buy.ltp = None
+    strategy_buy.can_enter is False
+

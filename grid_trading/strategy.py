@@ -41,6 +41,8 @@ class BaseStrategy(BaseModel):
 
     @property
     def can_enter(self) -> bool:
+        if not(self.ltp):
+            return False
         methods = [attr for attr in dir(self) if attr.startswith("before_entry")]
         checks = [getattr(self, attr)() for attr in methods]
         return all(checks)
@@ -123,10 +125,6 @@ class Strategy(BaseStrategy):
         Check whether the current price/ltp is outside the given range
         """
         ltp = self.ltp
-        # No trade in case of no ltp
-        if not(ltp):
-            return False
-
         # Direction check for prices greater than entry price
         if self.direction == 1:
             if ltp > self.buy_price:
@@ -140,6 +138,16 @@ class Strategy(BaseStrategy):
                 return True
         else:
             return False
+
+    def before_entry_check_between_prices(self):
+        """
+        Check whether the current price ltp is between the backward and forward price.
+        If it is between them, then no trade should be taken
+        """
+        if (self.ltp <= self.next_forward_price) and (self.ltp >= self.next_backward_price):
+            return False
+        else:
+            return True
 
     def set_initial_prices(self):
         """
