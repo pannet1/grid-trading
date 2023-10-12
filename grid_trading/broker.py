@@ -17,22 +17,29 @@ try:
 except ImportError:
     logger.error("omspy brokers not installed")
 
-BROKER = Zerodha
+BROKER = Finvasia
 
 
 def ltp_from_server(symbols: List[str]) -> Dict[str, float]:
     """
     retrieves ltp from redis server for the given list of symbols
     """
-    return RedisClient().get_ltp(symbols)
+    return RedisClient().ltp(symbols)
 
 
 def get_actual_broker():
-    config_file = os.path.join(
-        os.environ["HOME"], "systemtrader", "config.yaml")
-    with open(config_file) as f:
-        config = yaml.safe_load(f)[0]["config"]
-        broker = BROKER(**config)
+    try:
+        # config_file = os.path.join(
+        #   os.environ["dir_path"], "systemtrader", "config.yaml")
+        dir_path = "../../"
+        with open(dir_path + "config2.yaml", "r") as f:
+            config = yaml.safe_load(f)[0]["config"]
+            broker = BROKER(**config)
+            broker.authenticate()
+            return broker
+    except Exception as e:
+        print(f"{e} trying alternate broker")
+        broker = RedisClient()
         broker.authenticate()
         return broker
 
