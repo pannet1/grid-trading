@@ -20,6 +20,7 @@ except Exception as e:
 # Global variables that would be used throughout the module
 DB = "/tmp/orders.sqlite"
 MODE = "DEV"  # change mode to PROD when using in production
+DIR_PATH = "../../"
 
 
 def get_database() -> Optional[Database]:
@@ -55,6 +56,7 @@ def main():
         datafeed = broker
     elif MODE == "PROD":
         config_file = os.path.join(os.environ["HOME"], "config2.yaml")
+        config_file = os.path.join(DIR_PATH, "config2.yaml")
         with open(config_file) as f:
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
