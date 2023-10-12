@@ -1,8 +1,8 @@
-logzero 
+logzero
 sqlite_utils
 omspy
 pandas
 numpy
 pyotp
-selenium
-../NorenRestApiPy-0.0.20-py2.py3-none-any.whl
+pydantic
+./NorenRestApiPy-0.0.20-py2.py3-none-any.whl
