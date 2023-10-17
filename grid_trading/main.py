@@ -13,7 +13,7 @@ import time
 from redis_client import RedisClient
 
 try:
-    from omspy.brokers.finvasia import Finvasia
+    from omspy_brokers.finvasia import Finvasia
 except Exception as e:
     print(e)
 
