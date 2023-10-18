@@ -10,7 +10,6 @@ from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker, PaperBroker
 import time
-from redis_client import RedisClient
 
 try:
     from omspy_brokers.finvasia import Finvasia
@@ -62,7 +61,8 @@ def main():
         with open(config_file) as f:
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
-            broker.authenticate()
+            print(broker.authenticate())
+
             datafeed = RedisClient()
             datafeed.authenticate()
             # Would use this on my machine; not recommended

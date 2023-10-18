@@ -1,54 +1,56 @@
-
-
 import time
 
 
 class Wserver:
     exchsym = []
-    ticks = None
+    ticks = {}
     feed_opened = False
 
-    @classmethod
-    def order_update_cb(cls, cb):
+    def __init__(self, broker):
+        self.api = broker.finvasia
+        self.api.start_websocket(
+            order_update_callback=self.order_update_cb,
+            subscribe_callback=self.subscribe_cb,
+            socket_open_callback=self.socket_open_cb)
+
+    def order_update_cb(self, cb):
         print(cb)
 
-    @classmethod
-    def subscribe_cb(cls, ticks):
-        print(ticks)
-        cls.ticks = ticks
+    def subscribe_cb(self, tick):
+        if isinstance(tick, dict):
+            if tick['e'] == 'NSE':
+                self.ticks[tick['ts'][:-3]] = float(tick['lp'])
+            else:
+                self.ticks[tick['ts']] = float(tick['lp'])
 
-    @classmethod
-    def socket_open_cb(cls):
-        cls.feed_opened = True
+    def socket_open_cb(self):
+        self.feed_opened = True
 
-    @classmethod
-    def set_exchsym(cls, es):
+    def not_implemented(self, es):
         if isinstance(es, list):
-            cls.exchsym.extend(es)
+            self.exchsym.extend(es)
         else:
-            cls.exchsym.append(es)
+            self.exchsym.append(es)
 
-    @classmethod
-    def ltp(cls, lst):
-        cls.set_exchsym(lst)
-        dct = {item[4:]: item[:3] for item in cls.exchsym}
-        dct = {k: cls.api.searchscrip(exchange=v, searchtext=k)[
-            'values'][0] for k, v in dct.items()}
-        lst = [k + '|' + v['token'] for k, v in dct.items()]
-        cls.api.subscribe(lst)
-        return cls.ticks
+    def ltp(self, lst):
+        if not isinstance(lst, list):
+            lst = [lst]
+        tkns = []
+        for k in lst:
+            v = k.split(':')
+            resp = self.api.searchscrip(exchange=v[0], searchtext=v[1])
+            if resp:
+                tkn = resp['values'][0]['token']
+                tkns.append(v[0] + '|' + tkn)
+        if any(tkns):
+            self.api.subscribe(tkns)
+            while not any(self.ticks):
+                time.sleep(0.2)
+            else:
+                return self.ticks
 
-    @classmethod
-    def start(cls, broker):
-        cls.api = broker.finvasia
-        cls.api.start_websocket(
-            order_update_callback=cls.order_update_cb,
-            subscribe_callback=cls.subscribe_cb,
-            socket_open_callback=cls.socket_open_cb)
-
-        while not cls.feed_opened:
-            print("waiting for feed to open")
-            time.sleep(1)
+    def close(self):
+        self.api.close_websocket()
 
 
 if __name__ == "__main__":
@@ -59,10 +61,18 @@ if __name__ == "__main__":
     dir_path = "../../"
     with open(dir_path + "config2.yaml", "r") as f:
         config = yaml.safe_load(f)[0]["config"]
+        print(config)
         broker = BROKER(**config)
-        broker.authenticate()
+        if broker.authenticate():
+            print("success")
 
-    Wserver.start(broker)
-    while True:
-        quote = Wserver.ltp(["NSE:TCS", "NSE:INFY"])
-        print(quote)
+    ws = Wserver(broker)
+    while not ws.feed_opened:
+        print("waiting for feed to open")
+        time.sleep(.2)
+
+    resp = ws.ltp(["NSE:TCS", "NSE:INFY"])
+    print(resp)
+    # Add a delay or perform other operations here
+
+    # When done, close the WebSocket connection

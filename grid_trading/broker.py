@@ -9,7 +9,6 @@ import yaml
 from typing import List, Dict, Optional
 from omspy.simulation.models import Instrument
 from omspy.simulation.virtual import generate_price
-from redis_client import RedisClient
 
 
 try:
