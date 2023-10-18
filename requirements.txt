@@ -1,6 +1,7 @@
 logzero
 sqlite_utils
 omspy
+git+https://github.com/pannet1/omspy-brokers
 pandas
 numpy
 pyotp
