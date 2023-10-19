@@ -38,6 +38,8 @@ class Wserver:
         tkns = []
         for k in lst:
             v = k.split(':')
+            if v[0] == 'NSE':
+                v[1] = v[1]+'-EQ'
             resp = self.api.searchscrip(exchange=v[0], searchtext=v[1])
             if resp:
                 tkn = resp['values'][0]['token']
@@ -71,7 +73,7 @@ if __name__ == "__main__":
         print("waiting for feed to open")
         time.sleep(.2)
 
-    resp = ws.ltp(["NSE:TCS", "NSE:INFY"])
+    resp = ws.ltp(["NSE:TCS", "NSE:IDEA"])
     print(resp)
     # Add a delay or perform other operations here
 
