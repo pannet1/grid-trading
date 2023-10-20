@@ -14,8 +14,11 @@ from wserver import Wserver
 
 try:
     from omspy_brokers.finvasia import Finvasia
+except ImportError:
+    from omspy.brokers.finvasia import Finvasia
 except Exception as e:
     print(e)
+
 
 # Global variables that would be used throughout the module
 with open("settings.yaml", "r") as f:

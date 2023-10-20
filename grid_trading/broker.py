@@ -16,7 +16,7 @@ try:
 except ImportError:
     logger.error("omspy brokers not installed")
 
-BROKER = Finvasia
+BROKER = Zerodha 
 
 
 def ltp_from_server(symbols: List[str]) -> Dict[str, float]:

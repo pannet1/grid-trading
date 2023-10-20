@@ -14,7 +14,8 @@ class Wserver:
             socket_open_callback=self.socket_open_cb)
 
     def order_update_cb(self, cb):
-        print(cb)
+        pass
+        #print(cb)
 
     def subscribe_cb(self, tick):
         if isinstance(tick, dict):
