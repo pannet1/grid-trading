@@ -16,7 +16,7 @@ try:
 except ImportError:
     logger.error("omspy brokers not installed")
 
-BROKER = Zerodha 
+BROKER = Zerodha
 
 
 def ltp_from_server(symbols: List[str]) -> Dict[str, float]:
@@ -128,8 +128,7 @@ class PaperBroker(ReplicaBroker):
         return the last price for the list of given symbols
         """
         symbols = [s[4:] for s in symbols]
-        dct = {k: v.last_price for k, v in self.instruments.items()
-               if k in symbols}
+        dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
         return dct
 
 

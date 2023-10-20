@@ -285,7 +285,9 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
         assert json.loads(o.JSON) == dict(ltp=95, target=98, backward=98, forward=100)
     order = sell.create_order()
     for o in order.orders:
-        assert json.loads(o.JSON) == dict(ltp=110, target=107, forward=110, backward=108)
+        assert json.loads(o.JSON) == dict(
+            ltp=110, target=107, forward=110, backward=108
+        )
 
 
 def test_strategy_price_jump_target(strategy_buy, strategy_sell):
@@ -401,7 +403,7 @@ def test_set_next_prices_buy(strategy_buy):
     s.set_next_prices(price=104)
     assert s.next_backward_price == 98
     assert s.next_forward_price == 100
-    #price goes down
+    # price goes down
     s.ltp = 98
     s.set_next_prices()
     assert s.next_backward_price == 98
@@ -439,7 +441,7 @@ def test_set_next_prices_sell(strategy_sell):
 
 def test_next_prices_buy_outside_price(strategy_buy):
     s = strategy_buy
-    for ltp in range(104,112):
+    for ltp in range(104, 112):
         s.ltp = ltp
         s.set_next_prices()
         assert s.next_forward_price == 100
@@ -456,7 +458,7 @@ def test_next_prices_buy_outside_price(strategy_buy):
 
 def test_next_prices_sell_outside_price(strategy_sell):
     s = strategy_sell
-    for ltp in range(80,96):
+    for ltp in range(80, 96):
         s.ltp = ltp
         s.set_next_prices()
         assert s.next_forward_price == 102
@@ -473,20 +475,21 @@ def test_next_prices_sell_outside_price(strategy_sell):
 def test_before_entry_check_outside_prices(strategy_buy, strategy_sell):
     buy, sell = strategy_buy, strategy_sell
     assert buy.before_entry_check_outside_prices() is True
-    assert sell.before_entry_check_outside_prices() is True 
+    assert sell.before_entry_check_outside_prices() is True
     buy.ltp = 97.6
     sell.ltp = 103.2
     assert buy.before_entry_check_outside_prices() is True
-    assert sell.before_entry_check_outside_prices() is True 
+    assert sell.before_entry_check_outside_prices() is True
     buy.ltp = 101
     sell.ltp = 99
     assert buy.before_entry_check_outside_prices() is False
-    assert sell.before_entry_check_outside_prices() is False 
+    assert sell.before_entry_check_outside_prices() is False
+
 
 def test_before_entry_check_between_prices_buy(strategy_buy):
     s = strategy_buy
     assert s.before_entry_check_between_prices() is False
-    for ltp in (98,98.4,99.4,99.2,100):
+    for ltp in (98, 98.4, 99.4, 99.2, 100):
         s.ltp = ltp
         assert s.before_entry_check_between_prices() is False
     s.ltp = 97.6
@@ -495,14 +498,15 @@ def test_before_entry_check_between_prices_buy(strategy_buy):
     # Check after prices are changed
     assert s.next_forward_price == 98
     assert s.next_backward_price == 96
-    for ltp in (95.6,98.4):
+    for ltp in (95.6, 98.4):
         s.ltp = ltp
         assert s.before_entry_check_between_prices() is True
+
 
 def test_before_entry_check_between_prices_sell(strategy_sell):
     s = strategy_sell
     assert s.before_entry_check_between_prices() is False
-    for ltp in (100,100.2,100.5,101.3,102):
+    for ltp in (100, 100.2, 100.5, 101.3, 102):
         s.ltp = ltp
         assert s.before_entry_check_between_prices() is False
     s.ltp = 102.05
@@ -510,9 +514,10 @@ def test_before_entry_check_between_prices_sell(strategy_sell):
     s.set_next_prices()
     assert s.next_forward_price == 104
     assert s.next_backward_price == 102
-    for ltp in (104.6,101.4):
+    for ltp in (104.6, 101.4):
         s.ltp = ltp
         assert s.before_entry_check_between_prices() is True
+
 
 def test_can_enter_prices_buy(strategy_buy):
     s = strategy_buy
@@ -522,17 +527,18 @@ def test_can_enter_prices_buy(strategy_buy):
     s.ltp = 97.9
     assert s.can_enter is True
 
+
 def test_can_enter_prices_sell(strategy_sell):
-    s = strategy_sell 
+    s = strategy_sell
     assert s.can_enter is False
     s.ltp = 97.9
     assert s.can_enter is False
     s.ltp = 103
     assert s.can_enter is True
 
+
 def test_can_enter_no_ltp(strategy_buy):
     strategy_buy.ltp = 97.9
     strategy_buy.can_enter is True
     strategy_buy.ltp = None
     strategy_buy.can_enter is False
-
