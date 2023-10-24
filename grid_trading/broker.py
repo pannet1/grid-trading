@@ -12,11 +12,6 @@ from omspy.simulation.virtual import generate_price
 from omspy_brokers.finvasia import Finvasia
 from wserver import Wserver
 
-try:
-    from omspy_brokers.finvasia import Finvasia
-except ImportError:
-    from omspy.brokers.finvasia import Finvasia
-    logger.error("omspy brokers not installed")
 
 BROKER = Finvasia
 
@@ -28,8 +23,9 @@ def get_actual_broker():
     with open(dir_path + "config2.yaml", "r") as f:
         config = yaml.safe_load(f)[0]["config"]
         broker = BROKER(**config)
-        broker.authenticate()
-        return broker
+        if broker.authenticate():
+            wserver = Wserver(broker)
+            return wserver
 
 
 def convert_dict_to_instrument(quotes: Dict[str, Dict]) -> List[Instrument]:
@@ -116,8 +112,7 @@ class PaperBroker(ReplicaBroker):
         if isinstance(self.broker, Zerodha):
             self._zrun()
         else:
-            wserver = Wserver(self.broker)
-            self._frun(wserver)
+            self._frun()
 
     def ltp(self, symbols: List[str]) -> Dict[str, float]:
         """
