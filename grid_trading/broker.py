@@ -6,7 +6,7 @@ from omspy.simulation.virtual import ReplicaBroker, FakeBroker
 from logzero import logger
 import os
 import yaml
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from omspy.simulation.models import Instrument
 from omspy.simulation.virtual import generate_price
 from omspy_brokers.finvasia import Finvasia
@@ -77,7 +77,7 @@ def convert_ltp_to_instruments(ltps: Dict[str, float]) -> List[Instrument]:
 
 
 class PaperBroker(ReplicaBroker):
-    broker: BROKER
+    broker: Any
     symbols: Optional[List[str]]
 
     class Config:
@@ -97,19 +97,19 @@ class PaperBroker(ReplicaBroker):
         # Mimicks broker order fill based on ltp
         self.run_fill()
 
-    def _frun(self, wserver):
+    def _frun(self):
         """
         Run this method if use ltp from redis server
         expects any broker
         """
-        ltp = wserver.ltp(self.symbols)
+        ltp = self.broker.ltp(self.symbols)
         instruments = convert_ltp_to_instruments(ltp)
         self.update(instruments)
         # Mimicks broker order fill based on ltp
         self.run_fill()
 
     def run(self):
-        if isinstance(self.broker, Zerodha):
+        if type(self.broker) == "Zerodha":
             self._zrun()
         else:
             self._frun()
