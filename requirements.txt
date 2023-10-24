@@ -1,9 +1,12 @@
 logzero
 sqlite_utils
-omspy
+../omspy-main/
 git+https://github.com/pannet1/omspy-brokers
 pandas
 numpy
 pyotp
 pydantic
-./NorenRestApiPy-0.0.20-py2.py3-none-any.whl
+git+https://github.com/pannet1/NorenRestApiPy
+kiteconnect
+selenium
+websocket_client

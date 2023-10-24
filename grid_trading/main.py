@@ -6,18 +6,12 @@ from typing import List, Optional
 from copy import deepcopy
 from strategy import Strategy
 from omspy.order import create_db
+from omspy_brokers.finvasia import Finvasia
 from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker, PaperBroker
 import time
 from wserver import Wserver
-
-try:
-    from omspy_brokers.finvasia import Finvasia
-except ImportError:
-    from omspy.brokers.finvasia import Finvasia
-except Exception as e:
-    print(e)
 
 
 # Global variables that would be used throughout the module

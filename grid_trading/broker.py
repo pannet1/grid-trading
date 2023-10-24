@@ -9,21 +9,16 @@ import yaml
 from typing import List, Dict, Optional
 from omspy.simulation.models import Instrument
 from omspy.simulation.virtual import generate_price
+from omspy_brokers.finvasia import Finvasia
 from wserver import Wserver
 
 try:
-    from omspy.brokers.finvasia import Finvasia
+    from omspy_brokers.finvasia import Finvasia
 except ImportError:
+    from omspy.brokers.finvasia import Finvasia
     logger.error("omspy brokers not installed")
 
-BROKER = Zerodha
-
-
-def ltp_from_server(symbols: List[str]) -> Dict[str, float]:
-    """
-    retrieves ltp from redis server for the given list of symbols
-    """
-    return Wserver().ltp(symbols)
+BROKER = Finvasia
 
 
 def get_actual_broker():
@@ -106,29 +101,31 @@ class PaperBroker(ReplicaBroker):
         # Mimicks broker order fill based on ltp
         self.run_fill()
 
-    def _frun(self):
+    def _frun(self, wserver):
         """
         Run this method if use ltp from redis server
         expects any broker
         """
-        ltp = ltp_from_server(self.symbols)
+        ltp = wserver.ltp(self.symbols)
         instruments = convert_ltp_to_instruments(ltp)
         self.update(instruments)
         # Mimicks broker order fill based on ltp
         self.run_fill()
 
     def run(self):
-        if type(self.broker) == Zerodha:
+        if isinstance(self.broker, Zerodha):
             self._zrun()
         else:
-            self._frun()
+            wserver = Wserver(self.broker)
+            self._frun(wserver)
 
     def ltp(self, symbols: List[str]) -> Dict[str, float]:
         """
         return the last price for the list of given symbols
         """
         symbols = [s[4:] for s in symbols]
-        dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
+        dct = {k: v.last_price for k, v in self.instruments.items()
+               if k in symbols}
         return dct
 
 
