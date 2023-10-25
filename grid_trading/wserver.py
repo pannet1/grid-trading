@@ -13,12 +13,15 @@ class Wserver:
             subscribe_callback=self.subscribe_cb,
             socket_open_callback=self.socket_open_cb,
         )
+        self.keys = ["lp", "e"]
 
     def order_update_cb(self, cb):
         pass
         # print(cb)
 
     def subscribe_cb(self, tick):
+        # check if self.keys are in tick
+
         if isinstance(tick, dict):
             if tick["e"] == "NSE":
                 self.ticks[tick["ts"][:-3]] = float(tick["lp"])
@@ -27,12 +30,6 @@ class Wserver:
 
     def socket_open_cb(self):
         self.feed_opened = True
-
-    def not_implemented(self, es):
-        if isinstance(es, list):
-            self.exchsym.extend(es)
-        else:
-            self.exchsym.append(es)
 
     def ltp(self, lst):
         if not isinstance(lst, list):
@@ -49,11 +46,12 @@ class Wserver:
         if any(tkns):
             self.api.subscribe(tkns)
             while not any(self.ticks):
-                time.sleep(0.2)
+                pass
             else:
+                self.close_socket()
                 return self.ticks
 
-    def close(self):
+    def close_socket(self):
         self.api.close_websocket()
 
 
@@ -71,12 +69,9 @@ if __name__ == "__main__":
             print("success")
 
     ws = Wserver(broker)
-    while not ws.feed_opened:
-        print("waiting for feed to open")
-        time.sleep(0.2)
-
-    resp = ws.ltp(["NSE:TCS", "NSE:IDEA"])
+    resp = ws.ltp(["NSE:TCS", "BSE:INFY"])
     print(resp)
+
     # Add a delay or perform other operations here
 
     # When done, close the WebSocket connection
