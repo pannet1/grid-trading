@@ -53,7 +53,7 @@ def main():
     strategies = []
     if MODE == "DEV":
         broker = paper_broker()
-        datafeed = broker
+        datafeed = Datafeed(broker)
     elif MODE == "PROD":
         config_file = os.path.join(DIR_PATH, CONFIG_FILE)
         with open(config_file) as f:
@@ -97,6 +97,7 @@ def main():
         if isinstance(datafeed, PaperBroker):
             datafeed.run()
         ltps = datafeed.ltp(symbols)
+        print(ltps)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)

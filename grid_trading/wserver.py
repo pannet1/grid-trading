@@ -61,7 +61,7 @@ class Datafeed:
     def __init__(self, broker):
         self.broker = broker
 
-    def quote(self, exchsym):
+    def ltp(self, exchsym):
         return Wserver(self.broker).ltp(exchsym)
 
 
