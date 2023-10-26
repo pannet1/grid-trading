@@ -11,7 +11,8 @@ from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker, PaperBroker
 import time
-from wserver import Datafeed
+import utils
+from wserver import Wserver
 
 
 # Global variables that would be used throughout the module
@@ -49,19 +50,27 @@ def get_all_symbols(strategies: List[Strategy]) -> List[str]:
 
 
 def main():
+    token_map = utils.get_exchange_token_map_finvasia()
+    instrument_map = {v: k for k, v in token_map.items()}
     parameters = pd.read_csv("parameters.csv").to_dict(orient="records")
+    tokens = []
+    for params in parameters:
+        sym = params["exchange"] + ":" + params["symbol"]
+        tok = instrument_map.get(sym)
+        if tok:
+            tokens.append(tok)
+    print(f"Tokens are {tokens}")
     strategies = []
     if MODE == "DEV":
         broker = paper_broker()
-        datafeed = Datafeed(broker)
+        datafeed = broker
     elif MODE == "PROD":
         config_file = os.path.join(DIR_PATH, CONFIG_FILE)
         with open(config_file) as f:
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
             broker.authenticate()
-
-            datafeed = Datafeed(broker)
+            datafeed = Wserver(broker, tokens=tokens)
             # Would use this on my machine; not recommended
             # datafeed = paper_broker()
     else:
@@ -84,10 +93,8 @@ def main():
         datafeed.symbols = symbols
         datafeed.run()
 
-    print(connection)
-
     # Initial update for the next entry prices
-    ltps = datafeed.ltp(symbols)
+    ltps = datafeed.ltp(tokens)
     print(ltps)
     for strategy in strategies:
         strategy.run(ltps)
@@ -96,8 +103,7 @@ def main():
         # This would be run only when it is mock instance
         if isinstance(datafeed, PaperBroker):
             datafeed.run()
-        ltps = datafeed.ltp(symbols)
-        print(ltps)
+        ltps = datafeed.ltp(tokens)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
