@@ -57,6 +57,14 @@ class Wserver:
         self.api.close_websocket()
 
 
+class Datafeed:
+    def __init__(self, broker):
+        self.broker = broker
+
+    def quote(self, exchsym):
+        return Wserver(self.broker).ltp(exchsym)
+
+
 if __name__ == "__main__":
     from omspy_brokers.finvasia import Finvasia
     import yaml
@@ -71,10 +79,15 @@ if __name__ == "__main__":
         if broker.authenticate():
             print("success")
 
+    """
+    ws = Wserver(broker)
+    resp = ws.ltp(["NSE:TCS", "NSE:INFY"])
+    print(resp)
+    """
+
+    obj = Datafeed(broker)
     while True:
-        # resp = Wserver(broker).ltp("NSE:TCS")
-        ws = Wserver(broker)
-        resp = ws.ltp(["NSE:TCS", "NSE:INFY"])
+        resp = obj.quote(["NSE:TCS", "NSE:INFY"])
         print(resp)
 
     # Add a delay or perform other operations here

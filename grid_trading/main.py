@@ -11,7 +11,7 @@ from logzero import logger
 from sqlite_utils import Database
 from broker import paper_broker, PaperBroker
 import time
-from wserver import Wserver
+from wserver import Datafeed
 
 
 # Global variables that would be used throughout the module
@@ -61,7 +61,7 @@ def main():
             broker = Finvasia(**config)
             broker.authenticate()
 
-            datafeed = Wserver(broker)
+            datafeed = Datafeed(broker)
             # Would use this on my machine; not recommended
             # datafeed = paper_broker()
     else:
