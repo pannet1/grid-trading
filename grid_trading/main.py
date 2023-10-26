@@ -58,6 +58,7 @@ def main():
         sym = params["exchange"] + ":" + params["symbol"]
         tok = instrument_map.get(sym)
         if tok:
+            tok = f"{params['exchange']}|{tok}"
             tokens.append(tok)
     print(f"Tokens are {tokens}")
     strategies = []
@@ -70,7 +71,7 @@ def main():
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
             broker.authenticate()
-            datafeed = Wserver(broker, tokens=tokens)
+            datafeed = Wserver(broker)
             # Would use this on my machine; not recommended
             # datafeed = paper_broker()
     else:
