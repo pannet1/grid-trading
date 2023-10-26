@@ -66,12 +66,13 @@ if __name__ == "__main__":
         if broker.authenticate():
             print("success")
 
-    tokens = ["NSE|15332", "NSE|14366", "NSE|18614", "NFO|67281"]
-    ws = Wserver(broker)
+    tokens = ["MCX|259601", "NSE|14366", "NSE|18614", "NFO|67281"]
     while True:
+        ws = Wserver(broker)
         resp = ws.ltp(tokens)
         print(resp)
         sleep(1)
+
     obj = Datafeed(broker)
     while True:
         resp = obj.ltp(tokens)

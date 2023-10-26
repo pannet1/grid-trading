@@ -10,7 +10,7 @@ from typing import List, Dict, Optional, Any
 from omspy.simulation.models import Instrument
 from omspy.simulation.virtual import generate_price
 from omspy_brokers.finvasia import Finvasia
-from wserver import Wserver
+from wserver import Datafeed
 
 
 BROKER = Finvasia
@@ -24,7 +24,7 @@ def get_actual_broker():
         config = yaml.safe_load(f)[0]["config"]
         broker = BROKER(**config)
         if broker.authenticate():
-            wserver = Wserver(broker)
+            wserver = Datafeed(broker)
             return wserver
 
 
@@ -119,8 +119,7 @@ class PaperBroker(ReplicaBroker):
         return the last price for the list of given symbols
         """
         symbols = [s[4:] for s in symbols]
-        dct = {k: v.last_price for k, v in self.instruments.items()
-               if k in symbols}
+        dct = {k: v.last_price for k, v in self.instruments.items() if k in symbols}
         return dct
 
 

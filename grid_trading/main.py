@@ -12,7 +12,7 @@ from sqlite_utils import Database
 from broker import paper_broker, PaperBroker
 import time
 import utils
-from wserver import Wserver
+from wserver import Datafeed
 
 
 # Global variables that would be used throughout the module
@@ -71,7 +71,7 @@ def main():
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
             broker.authenticate()
-            datafeed = Wserver(broker)
+            datafeed = Datafeed(broker)
             # Would use this on my machine; not recommended
             # datafeed = paper_broker()
     else:
