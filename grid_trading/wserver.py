@@ -1,11 +1,6 @@
-import os
-import sys
 import logging
 import time
 import yaml
-from time import sleep
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # sample
 logging.basicConfig(level=logging.INFO)
@@ -54,15 +49,6 @@ class Wserver:
         val = message.get("lp", False)
         if val:
             self.ltp[message["e"] + "|" + message["tk"]] = val
-
-
-# end of callbacks
-
-
-def get_time(time_string):
-    data = time.strptime(time_string, "%d-%m-%Y %H:%M:%S")
-
-    return time.mktime(data)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ from typing import List, Dict, Optional, Any
 from omspy.simulation.models import Instrument
 from omspy.simulation.virtual import generate_price
 from omspy_brokers.finvasia import Finvasia
-from wserver import Datafeed
+from wserver import Wserver as Datafeed
 
 
 BROKER = Finvasia

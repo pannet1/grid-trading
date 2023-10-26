@@ -12,7 +12,7 @@ from sqlite_utils import Database
 from broker import paper_broker, PaperBroker
 import time
 import utils
-from wserver import Wserver
+from wserver import Datafeed
 
 
 # Global variables that would be used throughout the module
@@ -71,7 +71,7 @@ def main():
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
             broker.authenticate()
-            datafeed = Wserver(broker)
+            datafeed = Datafeed(broker)
             # Would use this on my machine; not recommended
             # datafeed = paper_broker()
     else:
@@ -83,7 +83,7 @@ def main():
         try:
             p = {k: v for k, v in params.items() if pd.notnull(v)}
             strategy = Strategy(
-                **p, broker=broker, datafeed=Wserver, connection=connection
+                **p, broker=broker, datafeed=datafeed, connection=connection
             )
             strategies.append(strategy)
         except Exception as e:
@@ -95,7 +95,7 @@ def main():
         datafeed.run()
 
     # Initial update for the next entry prices
-    ltps = datafeed.ltp
+    ltps = datafeed.ltp(tokens)
     print(ltps)
     for strategy in strategies:
         strategy.run(ltps)
@@ -104,8 +104,7 @@ def main():
         # This would be run only when it is mock instance
         if isinstance(datafeed, PaperBroker):
             datafeed.run()
-        ltps = datafeed.ltp
-        print(ltps)
+        ltps = datafeed.ltp(tokens)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
