@@ -1,61 +1,72 @@
+import os
+import sys
+import logging
 import time
+import yaml
+from time import sleep
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# sample
+logging.basicConfig(level=logging.INFO)
 
 
 class Wserver:
-    ticks = {}
-    subscribed_tkns = []
-    feed_opened = False
+    # flag to tell us if the websocket is open
+    socket_opened = False
+    ltp = {}
 
     def __init__(self, broker):
         self.api = broker.finvasia
-        self.api.start_websocket(
-            order_update_callback=self.order_update_cb,
-            subscribe_callback=self.subscribe_cb,
-            socket_open_callback=self.socket_open_cb,
+        ret = self.api.start_websocket(
+            order_update_callback=self.event_handler_order_update,
+            subscribe_callback=self.event_handler_quote_update,
+            socket_open_callback=self.open_callback,
         )
-        self.keys = ["lp", "e", "ts"]
+        if ret:
+            logging.debug(f"{ret} ws started")
 
-    def order_update_cb(self, cb):
-        pass
-        # print(cb)
+    def open_callback(self):
+        self.socket_opened = True
+        print("app is connected")
+        tokens = ["MCX|259601", "MCX|259602", "NSE|18614", "NFO|67281"]
+        self.api.subscribe(tokens, feed_type="d")
+        # api.subscribe(['NSE|22', 'BSE|522032'])
 
-    def subscribe_cb(self, tick):
-        if isinstance(tick, dict):
-            self.ticks[tick["e"] + "|" + tick["tk"]] = float(tick["lp"])
+    # application callbacks
+    def event_handler_order_update(self, message):
+        logging.info("order event: " + str(message))
 
-    def socket_open_cb(self):
-        self.feed_opened = True
-
-    def ltp(self, tkns):
-        if not isinstance(tkns, list):
-            tkns = [tkns]
-        if any(self.subscribed_tkns):
-            self.api.unsubscribe(self.subscribed_tkns)
-        self.ticks = {}
-        self.api.subscribe(tkns)
-        while not any(self.ticks):
-            pass
-        else:
-            self.close_socket(tkns)
-            return self.ticks
-
-    def close_socket(self, tkns):
-        self.subscribed_tkns = tkns
-        self.api.close_websocket()
+    def event_handler_quote_update(self, message):
+        # e   Exchange
+        # tk  Token
+        # lp  LTP
+        # pc  Percentage change
+        # v   volume
+        # o   Open price
+        # h   High price
+        # l   Low price
+        # c   Close price
+        # ap  Average trade price
+        logging.debug(
+            "quote event: {0}".format(time.strftime("%d-%m-%Y %H:%M:%S")) + str(message)
+        )
+        val = message.get("lp", False)
+        if val:
+            self.ltp[message["e"] + "|" + message["tk"]] = val
 
 
-class Datafeed:
-    def __init__(self, broker):
-        self.broker = broker
+# end of callbacks
 
-    def ltp(self, exchsym):
-        return Wserver(self.broker).ltp(exchsym)
+
+def get_time(time_string):
+    data = time.strptime(time_string, "%d-%m-%Y %H:%M:%S")
+
+    return time.mktime(data)
 
 
 if __name__ == "__main__":
     from omspy_brokers.finvasia import Finvasia
-    import yaml
-    from time import sleep
 
     BROKER = Finvasia
     dir_path = "../../"
@@ -66,14 +77,6 @@ if __name__ == "__main__":
         if broker.authenticate():
             print("success")
 
-    tokens = ["MCX|259601", "NSE|14366", "NSE|18614", "NFO|67281"]
+    wserver = Wserver(broker)
     while True:
-        ws = Wserver(broker)
-        resp = ws.ltp(tokens)
-        print(resp)
-        sleep(1)
-
-    obj = Datafeed(broker)
-    while True:
-        resp = obj.ltp(tokens)
-        print(resp)
+        print(wserver.ltp)
