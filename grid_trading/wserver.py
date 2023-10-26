@@ -3,7 +3,7 @@ import time
 
 class Wserver:
     ticks = {}
-    tkns = []
+    subscribed_tkns = []
     feed_opened = False
 
     def __init__(self, broker):
@@ -21,39 +21,26 @@ class Wserver:
 
     def subscribe_cb(self, tick):
         if isinstance(tick, dict):
-            if tick["e"] == "NSE":
-                self.ticks[tick["e"] + ":" + tick["ts"][:-3]] = float(tick["lp"])
-            else:
-                self.ticks[tick["e" + ":"] + tick["ts"]] = float(tick["lp"])
+            self.ticks[tick["e"] + "|" + tick["tk"]] = float(tick["lp"])
 
     def socket_open_cb(self):
         self.feed_opened = True
 
-    def ltp(self, lst):
-        if not isinstance(lst, list):
-            lst = [lst]
-        tkns = []
-        for k in lst:
-            v = k.split(":")
-            if v[0] == "NSE":
-                v[1] = v[1] + "-EQ"
-            resp = self.api.searchscrip(exchange=v[0], searchtext=v[1])
-            if resp:
-                tkn = resp["values"][0]["token"]
-                tkns.append(v[0] + "|" + tkn)
-        if any(tkns):
-            if any(self.tkns):
-                self.api.unsubscribe(self.tkns)
-            self.ticks = {}
-            self.api.subscribe(tkns)
-            while not any(self.ticks):
-                pass
-            else:
-                self.close_socket(tkns)
-                return self.ticks
+    def ltp(self, tkns):
+        if not isinstance(tkns, list):
+            tkns = [tkns]
+        if any(self.subscribed_tkns):
+            self.api.unsubscribe(self.subscribed_tkns)
+        self.ticks = {}
+        self.api.subscribe(tkns)
+        while not any(self.ticks):
+            pass
+        else:
+            self.close_socket(tkns)
+            return self.ticks
 
     def close_socket(self, tkns):
-        self.tkns = tkns
+        self.subscribed_tkns = tkns
         self.api.close_websocket()
 
 
@@ -79,17 +66,13 @@ if __name__ == "__main__":
         if broker.authenticate():
             print("success")
 
-    """
+    tokens = ["NSE|15332", "NSE|14366", "NSE|18614", "NFO|67281"]
     ws = Wserver(broker)
-    resp = ws.ltp(["NSE:TCS", "NSE:INFY"])
-    print(resp)
-    """
-
+    while True:
+        resp = ws.ltp(tokens)
+        print(resp)
+        sleep(1)
     obj = Datafeed(broker)
     while True:
-        resp = obj.quote(["NSE:TCS", "NSE:INFY"])
+        resp = obj.ltp(tokens)
         print(resp)
-
-    # Add a delay or perform other operations here
-
-    # When done, close the WebSocket connection
