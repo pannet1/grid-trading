@@ -1,0 +1,31 @@
+order_place:
+  symbol: trading_symbol
+  side: transaction_type
+  exchange: exchange_segment
+order_modify:
+  symbol: trading_symbol
+  side: transaction_type
+  exchange: exchange_segment
+orders:
+  nOrdNo: order_id
+  sym: symbol
+  ordSt: status
+  prod: product
+  avgPrc: average_price
+  fldQty: filled_quantity
+  qty: quantity
+  prc: price
+  trgPrc: trigger_price
+  prcTp: order_type
+positions:
+  buyAmt: buy_amount
+  prod: product
+  flBuyQty: buy_quantity
+  flSellQty: sell_quantity
+  sellAmt: sell_amount
+  trdSym: symbol
+trades:
+  avgPrc: average_price
+  fldQty: filled_quantity
+  trdSym: symbol
+  nOrdNo: order_id
