@@ -2,8 +2,8 @@ import time
 
 
 class Wserver:
-    exchsym = []
     ticks = {}
+    tkns = []
     feed_opened = False
 
     def __init__(self, broker):
@@ -13,20 +13,18 @@ class Wserver:
             subscribe_callback=self.subscribe_cb,
             socket_open_callback=self.socket_open_cb,
         )
-        self.keys = ["lp", "e"]
+        self.keys = ["lp", "e", "ts"]
 
     def order_update_cb(self, cb):
         pass
         # print(cb)
 
     def subscribe_cb(self, tick):
-        # check if self.keys are in tick
-
         if isinstance(tick, dict):
             if tick["e"] == "NSE":
-                self.ticks[tick["ts"][:-3]] = float(tick["lp"])
+                self.ticks[tick["e"] + ":" + tick["ts"][:-3]] = float(tick["lp"])
             else:
-                self.ticks[tick["ts"]] = float(tick["lp"])
+                self.ticks[tick["e" + ":"] + tick["ts"]] = float(tick["lp"])
 
     def socket_open_cb(self):
         self.feed_opened = True
@@ -44,20 +42,25 @@ class Wserver:
                 tkn = resp["values"][0]["token"]
                 tkns.append(v[0] + "|" + tkn)
         if any(tkns):
+            if any(self.tkns):
+                self.api.unsubscribe(self.tkns)
+            self.ticks = {}
             self.api.subscribe(tkns)
             while not any(self.ticks):
                 pass
             else:
-                self.close_socket()
+                self.close_socket(tkns)
                 return self.ticks
 
-    def close_socket(self):
+    def close_socket(self, tkns):
+        self.tkns = tkns
         self.api.close_websocket()
 
 
 if __name__ == "__main__":
     from omspy_brokers.finvasia import Finvasia
     import yaml
+    from time import sleep
 
     BROKER = Finvasia
     dir_path = "../../"
@@ -68,9 +71,11 @@ if __name__ == "__main__":
         if broker.authenticate():
             print("success")
 
-    ws = Wserver(broker)
-    resp = ws.ltp(["NSE:TCS", "BSE:INFY"])
-    print(resp)
+    while True:
+        # resp = Wserver(broker).ltp("NSE:TCS")
+        ws = Wserver(broker)
+        resp = ws.ltp(["NSE:TCS", "NSE:INFY"])
+        print(resp)
 
     # Add a delay or perform other operations here
 
