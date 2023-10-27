@@ -11,8 +11,9 @@ class Wserver:
     socket_opened = False
     ltp = {}
 
-    def __init__(self, broker):
+    def __init__(self, broker, tokens):
         self.api = broker.finvasia
+        self.tokens = tokens
         ret = self.api.start_websocket(
             order_update_callback=self.event_handler_order_update,
             subscribe_callback=self.event_handler_quote_update,
@@ -24,7 +25,7 @@ class Wserver:
     def open_callback(self):
         self.socket_opened = True
         print("app is connected")
-        tokens = ["MCX|259601", "MCX|259602", "NSE|18614", "NFO|67281"]
+        tokens = self.tokens
         self.api.subscribe(tokens, feed_type="d")
         # api.subscribe(['NSE|22', 'BSE|522032'])
 

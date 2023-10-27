@@ -71,7 +71,7 @@ def main():
             config = yaml.safe_load(f)[0]["config"]
             broker = Finvasia(**config)
             broker.authenticate()
-            datafeed = Wserver(broker)
+            datafeed = Wserver(broker, tokens=tokens)
             # Would use this on my machine; not recommended
             # datafeed = paper_broker()
     else:
@@ -104,8 +104,7 @@ def main():
         # This would be run only when it is mock instance
         if isinstance(datafeed, PaperBroker):
             datafeed.run()
-        ltps = datafeed.ltp
-        print(ltps)
+        ltps = utils.ltp_by_symbol(datafeed.ltp, token_map)
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)

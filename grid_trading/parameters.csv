@@ -1,6 +1,4 @@
 exchange,symbol,side,buy_quantity,buy_offset,buy_target,buy_price,sell_quantity,sell_offset,sell_target,sell_price,status,max_buy_quantity,max_sell_quantity,max_orders_cap,buy_stop_price,sell_stop_price
-NSE,NMDC-EQ,BUY,20,0.5,0.5,152,,,,,1,1000,,100,130,
-NSE,IDEA-EQ,BUY,50,0.25,0.15,10.5,,,,,1,1000,,100,10,
-NSE,SAMHI-EQ,BUY,50,0.5,0.5,147.5,,,,,1,1000,,100,100,
-MCX, CRUDEOIL15NOV23P7100,BUY,50,0.5,0.5,50,,,,,1,1000,,100,100,
-NFO,NIFTY26OCT23P19000,BUY,50,3,3,50,,,,,1,1000,,100,20,
+NSE,NMDC-EQ,BUY,20,0.2,0.5,154.5,,,,,1,1000,,100,130,
+NSE,IDEA-EQ,BUY,50,0.05,0.1,11,,,,,1,1000,,100,10,
+MCX,CRUDEOIL15NOV23P7100,BUY,50,0.5,0.5,50,,,,,1,1000,,100,100,

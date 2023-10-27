@@ -26,3 +26,17 @@ def get_exchange_token_map_finvasia(
     df = pd.concat([df1, df2, df3])
     df["TradingSymbol"] = df["Exchange"] + ":" + df["TradingSymbol"]
     return {int(k): v for k, v in zip(df[key].values, df[value].values)}
+
+
+def ltp_by_symbol(ltps:Dict[str,str], mapper:Dict[int,str])->Dict[str, float]:
+    vals = dict()
+    for k,v in ltps.items():
+        try:
+            token = int(k.split('|')[-1])
+            ltp = float(v)
+            symbol = mapper.get(token)[4:]
+            if symbol:
+                vals[symbol] = ltp
+        except Exception as e:
+            pass
+    return vals
