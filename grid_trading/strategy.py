@@ -1,7 +1,7 @@
 from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
-from typing import Any, List, Optional, Dict, Set,Tuple
+from typing import Any, List, Optional, Dict, Set, Tuple, Callable
 from collections import Counter
 import json
 from logzero import logger
@@ -67,6 +67,7 @@ class Strategy(BaseStrategy):
     max_orders_cap: Optional[float]
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
+    bot_function: Optional[Callable]
     orders: Optional[List[CompoundOrder]]
     _direction: Optional[int] = PrivateAttr()
     _initial_price: Optional[float] = PrivateAttr()
@@ -82,6 +83,8 @@ class Strategy(BaseStrategy):
         self._initial_price = None
         self._next_backward_price = None
         self._next_forward_price = None
+        if self.bot_function is None:
+            self.bot_function = lambda x: x  # Just the identity function
         if str(self.side).lower() == "buy":
             self._direction = 1
         elif str(self.side).lower() == "sell":
@@ -143,7 +146,7 @@ class Strategy(BaseStrategy):
             return True
 
     @property
-    def total_quantity(self)->Tuple[int,int]:
+    def total_quantity(self) -> Tuple[int, int]:
         """
         returns the total buy and sell quantity as a tuple
         """
@@ -156,7 +159,6 @@ class Strategy(BaseStrategy):
                     sell_qty += order.quantity
         return (buy_qty, sell_qty)
 
-
     def before_entry_check_max_quantity(self):
         buy_quantity, sell_quantity = self.total_quantity
         if buy_quantity >= self.max_buy_quantity:
@@ -164,7 +166,6 @@ class Strategy(BaseStrategy):
         if sell_quantity >= self.max_sell_quantity:
             return False
         return True
-
 
     def set_initial_prices(self):
         """
@@ -315,6 +316,8 @@ class Strategy(BaseStrategy):
             exchange=self.exchange,
             product=product,
         )
+        order.order_id = response
+        self.bot_function(order)
         if isinstance(response, VOrder):
             order_id = response.order_id
             order.order_id = order_id
