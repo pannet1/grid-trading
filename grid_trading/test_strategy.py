@@ -2,6 +2,7 @@ import pytest
 from strategy import *
 from omspy.simulation.virtual import FakeBroker
 from copy import deepcopy
+from unittest.mock import patch
 
 
 @pytest.fixture
@@ -542,3 +543,18 @@ def test_can_enter_no_ltp(strategy_buy):
     strategy_buy.can_enter is True
     strategy_buy.ltp = None
     strategy_buy.can_enter is False
+
+
+def test_product_order_place(strategy_buy):
+    s = strategy_buy
+    with patch("omspy.simulation.virtual.FakeBroker") as mock_broker:
+        s.broker = mock_broker
+        exchanges = ("NSE", "BSE", "NFO", "MCX")
+        codes = ("C", "C", "M", "M")
+        for i, (e, c) in enumerate(zip(exchanges, codes)):
+            order = Order(symbol=s.symbol, side="buy", quantity=100)
+            s.exchange = e
+            s._place_one_order(order)
+            call_args = mock_broker.order_place.call_args_list[i]
+            assert call_args.kwargs["product"] == c
+        assert mock_broker.order_place.call_count == 4

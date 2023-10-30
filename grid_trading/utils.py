@@ -28,11 +28,11 @@ def get_exchange_token_map_finvasia(
     return {int(k): v for k, v in zip(df[key].values, df[value].values)}
 
 
-def ltp_by_symbol(ltps:Dict[str,str], mapper:Dict[int,str])->Dict[str, float]:
+def ltp_by_symbol(ltps: Dict[str, str], mapper: Dict[int, str]) -> Dict[str, float]:
     vals = dict()
-    for k,v in ltps.items():
+    for k, v in ltps.items():
         try:
-            token = int(k.split('|')[-1])
+            token = int(k.split("|")[-1])
             ltp = float(v)
             symbol = mapper.get(token)[4:]
             if symbol:

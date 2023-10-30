@@ -280,8 +280,17 @@ class Strategy(BaseStrategy):
         """
         Execute one order
         """
+        product = "M"
+        if self.exchange in ("NSE", "BSE"):
+            product = "C"
+        else:
+            product = "M"
+        print(self.exchange)
         response = order.execute(
-            broker=self.broker, order_type="LIMIT", exchange=self.exchange
+            broker=self.broker,
+            order_type="LIMIT",
+            exchange=self.exchange,
+            product=product,
         )
         if isinstance(response, VOrder):
             order_id = response.order_id
