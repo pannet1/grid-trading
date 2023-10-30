@@ -558,3 +558,31 @@ def test_product_order_place(strategy_buy):
             call_args = mock_broker.order_place.call_args_list[i]
             assert call_args.kwargs["product"] == c
         assert mock_broker.order_place.call_count == 4
+
+def test_total_quantity(strategy_buy):
+    s = strategy_buy
+    s.run({'BHEL': 97.9})
+    assert len(s.orders) == 1
+    assert s.total_quantity == (10,10)
+    s.run({'BHEL': 95.9})
+    s.run({'BHEL': 93.9})
+    assert len(s.orders) == 3
+    assert s.total_quantity == (30,30)
+
+def test_before_entry_check_max_quantity(strategy_buy):
+    s = strategy_buy
+    s.max_buy_quantity = 0
+    s.run({'BHEL': 97.9})
+    assert len(s.orders) == 0
+    s.max_buy_quantity = 30
+    s.run({'BHEL': 97.9})
+    assert len(s.orders) == 1
+    for i in range(10):
+        s.run({'BHEL': 95.9})
+    assert len(s.orders) == 2
+    for i in range(20):
+        s.run({'BHEL':95.9-i})
+    assert len(s.orders) == 3
+    assert s.total_quantity == (30,30)
+
+

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
-from typing import Any, List, Optional, Dict, Set
+from typing import Any, List, Optional, Dict, Set,Tuple
 from collections import Counter
 import json
 from logzero import logger
@@ -62,8 +62,8 @@ class Strategy(BaseStrategy):
     sell_target: Optional[float]
     sell_price: Optional[float]
     status: bool = True
-    max_buy_quantity: Optional[float]
-    max_sell_quantity: Optional[float]
+    max_buy_quantity: float = 1e6
+    max_sell_quantity: float = 1e6
     max_orders_cap: Optional[float]
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
@@ -141,6 +141,30 @@ class Strategy(BaseStrategy):
             return False
         else:
             return True
+
+    @property
+    def total_quantity(self)->Tuple[int,int]:
+        """
+        returns the total buy and sell quantity as a tuple
+        """
+        buy_qty = sell_qty = 0
+        for com in self.orders:
+            for order in com.orders:
+                if order.side.upper() == "BUY":
+                    buy_qty += order.quantity
+                elif order.side.upper() == "SELL":
+                    sell_qty += order.quantity
+        return (buy_qty, sell_qty)
+
+
+    def before_entry_check_max_quantity(self):
+        buy_quantity, sell_quantity = self.total_quantity
+        if buy_quantity >= self.max_buy_quantity:
+            return False
+        if sell_quantity >= self.max_sell_quantity:
+            return False
+        return True
+
 
     def set_initial_prices(self):
         """
@@ -285,7 +309,6 @@ class Strategy(BaseStrategy):
             product = "C"
         else:
             product = "M"
-        print(self.exchange)
         response = order.execute(
             broker=self.broker,
             order_type="LIMIT",
