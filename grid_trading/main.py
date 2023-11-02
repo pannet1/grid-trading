@@ -94,6 +94,7 @@ def main():
         datafeed.symbols = symbols
         datafeed.run()
 
+
     # Initial update for the next entry prices
     ltps = datafeed.ltp
     print(ltps)
@@ -108,9 +109,10 @@ def main():
         for strategy in strategies:
             strategy.run(ltps)
         time.sleep(1)
-        if i % 5 == 0:
-            pass
-            # TODO: Update orders
+        if i % 10 == 0:
+            order_info = broker.orders
+            for strategy in strategies:
+                strategy.update_orders(order_info)
 
 
 if __name__ == "__main__":
