@@ -60,23 +60,13 @@ def main():
         if tok:
             tok = f"{params['exchange']}|{tok}"
             tokens.append(tok)
-    print(f"Tokens are {tokens}")
     strategies = []
-    if MODE == "DEV":
-        broker = paper_broker()
-        datafeed = broker
-    elif MODE == "PROD":
-        config_file = os.path.join(DIR_PATH, CONFIG_FILE)
-        with open(config_file) as f:
-            config = yaml.safe_load(f)[0]["config"]
-            broker = Finvasia(**config)
-            broker.authenticate()
-            datafeed = Wserver(broker, tokens=tokens)
-            # Would use this on my machine; not recommended
-            # datafeed = paper_broker()
-    else:
-        logger.error(f"Invalid {MODE}; exiting program")
-        return
+    config_file = os.path.join(DIR_PATH, CONFIG_FILE)
+    with open(config_file) as f:
+        config = yaml.safe_load(f)[0]["config"]
+        broker = Finvasia(**config)
+        broker.authenticate()
+        datafeed = Wserver(broker, tokens=tokens)
 
     connection = get_database()
     for params in parameters:
@@ -110,9 +100,12 @@ def main():
             strategy.run(ltps)
         time.sleep(1)
         if i % 10 == 0:
-            order_info = broker.orders
-            for strategy in strategies:
-                strategy.update_orders(order_info)
+            try:
+                order_info = broker.orders
+                for strategy in strategies:
+                    strategy.update_orders(order_info)
+            except Exception as e:
+                logger.error(e)
 
 
 if __name__ == "__main__":
