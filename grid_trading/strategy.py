@@ -9,6 +9,7 @@ from sqlite_utils import Database
 
 from omspy.simulation.models import OrderType, VOrder
 
+R = lambda x,y=2: round(x,y)
 
 class BaseStrategy(BaseModel):
     """
@@ -113,6 +114,13 @@ class Strategy(BaseStrategy):
     @property
     def prices(self):
         return self._prices
+
+    def update_orders(self, orders:Optional[List[CompoundOrder]]=None):
+        if orders is None:
+            orders = self.broker.orders 
+        orders_dict = {o['order_id']:o for o in orders}
+        for com in self.orders:
+            com.update_orders(orders_dict)
 
     def before_entry_check_outside_prices(self):
         """
@@ -272,16 +280,16 @@ class Strategy(BaseStrategy):
         com = CompoundOrder(broker=self.broker, connection=self.connection)
         entry = self._create_entry_order()
         target = self._create_target_order()
-        info = json.dumps(
-            dict(
-                ltp=self.ltp,
-                target=target.price,
-                backward=self.next_backward_price,
-                forward=self.next_forward_price,
+        info = dict(
+                ltp=R(self.ltp),
+                target=R(target.price),
+                backward=R(self.next_backward_price),
+                forward=R(self.next_forward_price),
             )
-        )
-        entry.JSON = info
-        target.JSON = info
+        info['key'] = 'entry'
+        entry.JSON = json.dumps(info)
+        info['key'] = 'target'
+        target.JSON = json.dumps(info)
         if entry and target:
             com.add(order=entry, key="entry")
             com.add(order=target, key="target")
