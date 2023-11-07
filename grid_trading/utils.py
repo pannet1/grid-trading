@@ -20,8 +20,8 @@ def get_exchange_token_map_finvasia(
     1) Exchange token map generated only for NSE,NFO exchanges
     2) Token is always in `int` format
     """
-    df1 = pd.read_csv("https://shoonya.finvasia.com/NSE_symbols.txt.zip")
-    df2 = pd.read_csv("https://shoonya.finvasia.com/NFO_symbols.txt.zip")
+    df1 = pd.read_csv("https://api.shoonya.com/NSE_symbols.txt.zip")
+    df2 = pd.read_csv("https://api.shoonya.com/NFO_symbols.txt.zip")
     df3 = pd.read_csv("https://api.shoonya.com/MCX_symbols.txt.zip")
     df = pd.concat([df1, df2, df3])
     df["TradingSymbol"] = df["Exchange"] + ":" + df["TradingSymbol"]
