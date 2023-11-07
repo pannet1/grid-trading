@@ -3,6 +3,7 @@ from strategy import *
 from omspy.simulation.virtual import FakeBroker
 from copy import deepcopy
 from unittest.mock import patch
+from omspy.order import create_db
 
 
 @pytest.fixture
@@ -283,7 +284,7 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
     order = buy.create_order()
     for o in order.orders:
         print(o.JSON)
-        assert json.loads(o.JSON) == dict(ltp=95, target=98, backward=98, forward=100)
+        assert json.loads(o.JSON) == dict(ltp=95, target=98, backward=98, forward=100,key='entry')
     order = sell.create_order()
     for o in order.orders:
         assert json.loads(o.JSON) == dict(
@@ -585,4 +586,22 @@ def test_before_entry_check_max_quantity(strategy_buy):
     assert len(s.orders) == 3
     assert s.total_quantity == (30,30)
 
+
+def test_strategy_db(strategy_buy):
+    s = strategy_buy
+    db = create_db()
+    s.connection = db
+    for i in range(3):
+        com = CompoundOrder(connection=db)
+        order = Order(symbol='BHEL', quantity=10, side="BUY", price=100+i, connection=db)
+        if i > 0:
+            order.order_id = f"abcd1234buy{i}"
+        com.add(order)
+        order = Order(symbol='BHEL', quantity=10, side="SELL", price=100+i+5, connection=db)
+        if i == 1:
+            order.order_id = f"abcd1234sell{i}"
+        com.add(order)
+        com.save()
+    orders = s.get_pending_orders_from_db()
+    assert len(orders) == 4
 

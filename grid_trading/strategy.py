@@ -35,6 +35,19 @@ class BaseStrategy(BaseModel):
         # Set datafeed
         if self.datafeed is None:
             self.datafeed = self.broker
+            
+    def get_pending_orders_from_db(self)->Optional[List[Order]]:
+        if self.connection is None:
+            return
+        db = self.connection
+        query = "select * from orders where parent_id in (select DISTINCT(parent_id) from orders where order_id is null and symbol= :symbol)"
+        orders = []
+        rows = db.query(query, params=dict(symbol=self.symbol))
+        for row in rows:
+            order = Order(**row)
+            orders.append(order)
+        return orders
+
 
     @property
     def broker_name(self) -> str:
