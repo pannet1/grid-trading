@@ -1,9 +1,11 @@
 """
-General utility functions that cwould be used across the project
+General utility functions that would be used across the project
 """
 
-from typing import Dict
+from typing import Dict, List, Optional
 import pandas as pd
+from omspy.order import Order, CompoundOrder
+from collections import defaultdict
 
 
 def get_exchange_token_map_finvasia(
@@ -40,3 +42,33 @@ def ltp_by_symbol(ltps: Dict[str, str], mapper: Dict[int, str]) -> Dict[str, flo
         except Exception as e:
             pass
     return vals
+
+
+def create_compound_order(
+    orders: List[Order], connection: Optional = None, broker: Optional = None
+) -> Optional[List[CompoundOrder]]:
+    """
+    create compound order from the given list of orders
+    Note
+    -----
+    1) A order is considered to be a compound order when a order with parent_id has exactly two orders
+    """
+    # Discard orders without a parent id
+    orders = [order for order in orders if order.parent_id]
+    dct = defaultdict(list)
+    for order in orders:
+        parent_id = order.parent_id
+        dct[parent_id].append(order)
+    com_orders = []
+    for k, v in dct.items():
+        if len(v) == 2:
+            com = CompoundOrder(id=k, connection=connection, broker=broker)
+            for order in v:
+                key = order.JSON.get("key")
+                if key:
+                    com.add(order, key=key)
+                else:
+                    break
+            if len(com.orders) == 2:
+                com_orders.append(com)
+    return com_orders

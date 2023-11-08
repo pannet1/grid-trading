@@ -4,6 +4,9 @@ from omspy.simulation.virtual import FakeBroker
 from copy import deepcopy
 from unittest.mock import patch
 from omspy.order import create_db
+import utils
+import json
+from copy import deepcopy
 
 
 @pytest.fixture
@@ -79,6 +82,30 @@ def strategy_both(strategy_buy):
     strategy.max_sell_quantity = 50
     strategy.sell_stop_price = 120
     return strategy
+
+
+@pytest.fixture
+def simple_order_list():
+    order1 = Order(
+        symbol="bhel",
+        parent_id="abcd1234",
+        quantity=5,
+        side="buy",
+        JSON=json.dumps({"key": "entry"}),
+        price=100,
+        order_type="limit",
+    )
+    order2 = Order(
+        symbol="bhel",
+        parent_id="abcd1234",
+        quantity=5,
+        side="sell",
+        JSON=json.dumps({"key": "target"}),
+        price=102,
+        order_type="limit",
+    )
+    orders = [order1, order2]
+    return orders
 
 
 def test_base_strategy():
@@ -284,7 +311,9 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
     order = buy.create_order()
     for o in order.orders:
         print(o.JSON)
-        assert json.loads(o.JSON) == dict(ltp=95, target=98, backward=98, forward=100,key='entry')
+        assert json.loads(o.JSON) == dict(
+            ltp=95, target=98, backward=98, forward=100, key="entry"
+        )
     order = sell.create_order()
     for o in order.orders:
         assert json.loads(o.JSON) == dict(
@@ -560,31 +589,33 @@ def test_product_order_place(strategy_buy):
             assert call_args.kwargs["product"] == c
         assert mock_broker.order_place.call_count == 4
 
+
 def test_total_quantity(strategy_buy):
     s = strategy_buy
-    s.run({'BHEL': 97.9})
+    s.run({"BHEL": 97.9})
     assert len(s.orders) == 1
-    assert s.total_quantity == (10,10)
-    s.run({'BHEL': 95.9})
-    s.run({'BHEL': 93.9})
+    assert s.total_quantity == (10, 10)
+    s.run({"BHEL": 95.9})
+    s.run({"BHEL": 93.9})
     assert len(s.orders) == 3
-    assert s.total_quantity == (30,30)
+    assert s.total_quantity == (30, 30)
+
 
 def test_before_entry_check_max_quantity(strategy_buy):
     s = strategy_buy
     s.max_buy_quantity = 0
-    s.run({'BHEL': 97.9})
+    s.run({"BHEL": 97.9})
     assert len(s.orders) == 0
     s.max_buy_quantity = 30
-    s.run({'BHEL': 97.9})
+    s.run({"BHEL": 97.9})
     assert len(s.orders) == 1
     for i in range(10):
-        s.run({'BHEL': 95.9})
+        s.run({"BHEL": 95.9})
     assert len(s.orders) == 2
     for i in range(20):
-        s.run({'BHEL':95.9-i})
+        s.run({"BHEL": 95.9 - i})
     assert len(s.orders) == 3
-    assert s.total_quantity == (30,30)
+    assert s.total_quantity == (30, 30)
 
 
 def test_strategy_db(strategy_buy):
@@ -593,11 +624,15 @@ def test_strategy_db(strategy_buy):
     s.connection = db
     for i in range(3):
         com = CompoundOrder(connection=db)
-        order = Order(symbol='BHEL', quantity=10, side="BUY", price=100+i, connection=db)
+        order = Order(
+            symbol="BHEL", quantity=10, side="BUY", price=100 + i, connection=db
+        )
         if i > 0:
             order.order_id = f"abcd1234buy{i}"
         com.add(order)
-        order = Order(symbol='BHEL', quantity=10, side="SELL", price=100+i+5, connection=db)
+        order = Order(
+            symbol="BHEL", quantity=10, side="SELL", price=100 + i + 5, connection=db
+        )
         if i == 1:
             order.order_id = f"abcd1234sell{i}"
         com.add(order)
@@ -605,3 +640,50 @@ def test_strategy_db(strategy_buy):
     orders = s.get_pending_orders_from_db()
     assert len(orders) == 4
 
+
+def test_utils_create_compound_order_simple(simple_order_list):
+    orders = simple_order_list
+    connection = create_db()
+    broker = FakeBroker()
+    com = utils.create_compound_order(orders, connection, broker)[0]
+    assert com.id == "abcd1234"
+    assert len(com.orders) == 2
+    assert com.get("entry").price == 100
+    assert com.get("target").price == 102
+    assert com.connection == connection
+    assert com.broker == broker
+
+
+def test_utils_compound_order_no_parent(simple_order_list):
+    orders = simple_order_list
+    orders.append(Order(symbol="sbin", quantity=5, side="buy"))
+    orders.append(Order(symbol="sbin", quantity=5, side="sell"))
+    com = utils.create_compound_order(orders)
+    assert len(com) == 1
+    assert com[0].connection is None
+    assert com[0].broker is None
+
+
+def test_utils_compound_order_more_than_two_orders(simple_order_list):
+    orders = simple_order_list
+    orders.append(deepcopy(orders[0]))
+    com = utils.create_compound_order(orders)
+    assert len(com) == 0
+
+
+def test_utils_compound_order_missing_key(simple_order_list):
+    orders = simple_order_list
+    orders[0].JSON = {"error": "no_key"}
+    com = utils.create_compound_order(orders)
+    assert len(com) == 0
+
+
+def test_utils_compound_order_multiple(simple_order_list):
+    orders = simple_order_list
+    orders.append(deepcopy(orders[0]))
+    orders.append(deepcopy(orders[1]))
+    orders[-1].parent_id = orders[-2].parent_id = "xyz12345"
+    com = utils.create_compound_order(orders)
+    assert len(com) == 2
+    assert com[0].id == "abcd1234"
+    assert com[1].id == "xyz12345"
