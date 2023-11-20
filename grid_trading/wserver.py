@@ -66,4 +66,5 @@ if __name__ == "__main__":
     tokens = ["NSE|22"]
     wserver = Wserver(broker, tokens)
     while True:
+        time.sleep(1)
         print(wserver.ltp)
