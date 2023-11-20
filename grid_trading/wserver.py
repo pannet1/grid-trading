@@ -63,7 +63,7 @@ if __name__ == "__main__":
         broker = BROKER(**config)
         if broker.authenticate():
             print("success")
-
-    wserver = Wserver(broker)
+    tokens = ["NSE|22"]
+    wserver = Wserver(broker, tokens)
     while True:
         print(wserver.ltp)
