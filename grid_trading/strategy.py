@@ -9,7 +9,8 @@ from sqlite_utils import Database
 
 from omspy.simulation.models import OrderType, VOrder
 
-R = lambda x,y=2: round(x,y)
+R = lambda x, y=2: round(x, y)
+
 
 class BaseStrategy(BaseModel):
     """
@@ -35,8 +36,8 @@ class BaseStrategy(BaseModel):
         # Set datafeed
         if self.datafeed is None:
             self.datafeed = self.broker
-            
-    def get_pending_orders_from_db(self)->Optional[List[Order]]:
+
+    def get_pending_orders_from_db(self) -> Optional[List[Order]]:
         if self.connection is None:
             return
         db = self.connection
@@ -47,7 +48,6 @@ class BaseStrategy(BaseModel):
             order = Order(**row)
             orders.append(order)
         return orders
-
 
     @property
     def broker_name(self) -> str:
@@ -128,10 +128,10 @@ class Strategy(BaseStrategy):
     def prices(self):
         return self._prices
 
-    def update_orders(self, orders:Optional[List[CompoundOrder]]=None):
+    def update_orders(self, orders: Optional[List[CompoundOrder]] = None):
         if orders is None:
-            orders = self.broker.orders 
-        orders_dict = {o['order_id']:o for o in orders}
+            orders = self.broker.orders
+        orders_dict = {o["order_id"]: o for o in orders}
         for com in self.orders:
             com.update_orders(orders_dict)
 
@@ -294,14 +294,14 @@ class Strategy(BaseStrategy):
         entry = self._create_entry_order()
         target = self._create_target_order()
         info = dict(
-                ltp=R(self.ltp),
-                target=R(target.price),
-                backward=R(self.next_backward_price),
-                forward=R(self.next_forward_price),
-            )
-        info['key'] = 'entry'
+            ltp=R(self.ltp),
+            target=R(target.price),
+            backward=R(self.next_backward_price),
+            forward=R(self.next_forward_price),
+        )
+        info["key"] = "entry"
         entry.JSON = json.dumps(info)
-        info['key'] = 'target'
+        info["key"] = "target"
         target.JSON = json.dumps(info)
         if entry and target:
             com.add(order=entry, key="entry")
@@ -337,14 +337,13 @@ class Strategy(BaseStrategy):
             exchange=self.exchange,
             product=product,
         )
-        order.order_id = response
-        self.bot_function(order)
         if isinstance(response, VOrder):
             order_id = response.order_id
-            order.order_id = order_id
-            order.save_to_db()
         else:
             order_id = response
+        order.order_id = order_id
+        order.save_to_db()
+        self.bot_function(order)
         logger.info(f"Order placed for {order.symbol} at {self.ltp} with {order_id}")
 
     def _place_entry_order(self):
