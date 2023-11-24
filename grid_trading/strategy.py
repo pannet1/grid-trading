@@ -57,6 +57,8 @@ class BaseStrategy(BaseModel):
     def can_enter(self) -> bool:
         if not (self.ltp):
             return False
+        if not (self.status):
+            return False
         methods = [attr for attr in dir(self) if attr.startswith("before_entry")]
         checks = [getattr(self, attr)() for attr in methods]
         return all(checks)
