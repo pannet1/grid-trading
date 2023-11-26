@@ -6,8 +6,8 @@ from collections import Counter
 import json
 from logzero import logger
 from sqlite_utils import Database
-
 from omspy.simulation.models import OrderType, VOrder
+import utils
 
 R = lambda x, y=2: round(x, y)
 
@@ -48,6 +48,34 @@ class BaseStrategy(BaseModel):
             order = Order(**row)
             orders.append(order)
         return orders
+
+    def _load_initial_orders(self):
+        """
+        Load initial orders from database
+        """
+        orders = self.get_pending_orders_from_db()
+        if orders:
+            com_orders = utils.create_compound_order(orders)
+            if com_orders:
+                for order in com_orders:
+                    self.orders.append(order)
+
+    def _get_outstanding_quantity(self) -> int:
+        """
+        Get outstanding quantity from orders
+        """
+        qty = 0
+        orders = self.get_pending_orders_from_db()
+        if orders:
+            for order in orders:
+                if not (order.is_done):
+                    pending = order.pending_quantity
+                    side = order.side
+                    if side.lower() == "buy":
+                        qty += pending
+                    else:
+                        qty -= pending
+        return qty
 
     @property
     def broker_name(self) -> str:
@@ -110,6 +138,8 @@ class Strategy(BaseStrategy):
             self._direction = None
 
         self.set_initial_prices()
+        self._load_initial_orders()
+        self.outstanding_quantity = self._get_outstanding_quantity()
 
     @property
     def direction(self):
@@ -185,7 +215,7 @@ class Strategy(BaseStrategy):
         if outstanding > 0:
             buy_qty += outstanding
         else:
-            sell_qty+= abs(outstanding)
+            sell_qty += abs(outstanding)
         return (buy_qty, sell_qty)
 
     def before_entry_check_max_quantity(self):

@@ -20,10 +20,46 @@ def strategy_args():
 
 
 @pytest.fixture
+def strategy_db():
+    db = create_db()
+    for i in range(3):
+        com = CompoundOrder(connection=db)
+        order = Order(
+            symbol="BHEL",
+            quantity=10,
+            side="BUY",
+            price=100 + i,
+            connection=db,
+            order_id=f"abcd1234buy{i}",
+            filled_quantity=10,
+            JSON=json.dumps({"key": "entry"}),
+        )
+        com.add(order)
+        order = Order(
+            symbol="BHEL",
+            quantity=10,
+            side="SELL",
+            price=100 + i + 5,
+            connection=db,
+            JSON=json.dumps({"key": "target"}),
+        )
+
+        if i == 1:
+            order.order_id = f"abcd1234sell{i}"
+            order.filled_quantity = 10
+            order.status = "COMPLTED"
+        com.add(order)
+        com.save()
+    return db
+
+
+@pytest.fixture
 def strategy_buy():
     broker = FakeBroker()
+    db = create_db()
     return Strategy(
         broker=broker,
+        connection=db,
         exchange="NSE",
         symbol="BHEL",
         side="buy",
@@ -41,8 +77,10 @@ def strategy_buy():
 @pytest.fixture
 def strategy_sell():
     broker = FakeBroker()
+    db = create_db()
     return Strategy(
         broker=broker,
+        connection=db,
         exchange="NSE",
         symbol="BHEL",
         side="sell",
@@ -136,7 +174,6 @@ def test_strategy_defaults():
     assert strategy.orders == []
     assert strategy._prices == set()
     assert strategy.outstanding_quantity == 0
-
 
 
 def test_strategy_defaults_direction_side_case():
@@ -259,8 +296,6 @@ def test_strategy_create_order(strategy_buy, strategy_sell):
     assert sell.orders[0].get("target").trigger_price == 99
 
 
-
-
 def test_entry_sell_strategy(strategy_sell):
     s = strategy_sell
     s.entry()
@@ -291,11 +326,11 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
     sell.ltp = 102.4
     order = buy.create_order()
     assert json.loads(order.orders[0].JSON) == dict(
-            ltp=95, target=98, backward=98, forward=100, key="entry"
-        )
+        ltp=95, target=98, backward=98, forward=100, key="entry"
+    )
     assert json.loads(order.orders[1].JSON) == dict(
-            ltp=95, target=98, backward=98, forward=100, key="target"
-        )
+        ltp=95, target=98, backward=98, forward=100, key="target"
+    )
     order = sell.create_order()
     assert json.loads(order.orders[0].JSON) == dict(
         ltp=102.4, target=99.4, forward=102, backward=100, key="entry"
@@ -604,6 +639,7 @@ def test_before_entry_check_max_quantity(strategy_buy):
     assert len(s.orders) == 3
     assert s.total_quantity == (30, 30)
 
+
 def test_total_quantity_outstanding(strategy_buy):
     s = strategy_buy
     s.outstanding_quantity = 20
@@ -616,25 +652,10 @@ def test_total_quantity_outstanding(strategy_buy):
     s.outstanding_quantity = -20
     assert s.total_quantity == (30, 50)
 
-def test_strategy_db(strategy_buy):
+
+def test_strategy_db(strategy_buy, strategy_db):
     s = strategy_buy
-    db = create_db()
-    s.connection = db
-    for i in range(3):
-        com = CompoundOrder(connection=db)
-        order = Order(
-            symbol="BHEL", quantity=10, side="BUY", price=100 + i, connection=db
-        )
-        if i > 0:
-            order.order_id = f"abcd1234buy{i}"
-        com.add(order)
-        order = Order(
-            symbol="BHEL", quantity=10, side="SELL", price=100 + i + 5, connection=db
-        )
-        if i == 1:
-            order.order_id = f"abcd1234sell{i}"
-        com.add(order)
-        com.save()
+    s.connection = strategy_db
     orders = s.get_pending_orders_from_db()
     assert len(orders) == 4
 
@@ -686,6 +707,7 @@ def test_utils_compound_order_multiple(simple_order_list):
     assert com[0].id == "abcd1234"
     assert com[1].id == "xyz12345"
 
+
 def test_entry_buy_strategy(strategy_buy):
     s = strategy_buy
     s.entry()
@@ -709,6 +731,7 @@ def test_entry_buy_strategy(strategy_buy):
     # Check order limit prices
     assert [x.get("entry").price for x in s.orders] == [98, 96, 94, 92, 90]
 
+
 def test_can_enter_status(strategy_buy, strategy_sell):
     sell = strategy_sell
     buy = strategy_buy
@@ -718,3 +741,25 @@ def test_can_enter_status(strategy_buy, strategy_sell):
     assert buy.can_enter is True
     buy.status = False
     assert buy.can_enter is False
+
+
+def test_strategy_load_initial_orders(strategy_db):
+    broker = FakeBroker()
+    db = strategy_db
+    strategy = Strategy(
+        broker=broker,
+        connection=db,
+        exchange="NSE",
+        symbol="BHEL",
+        side="buy",
+        buy_quantity=10,
+        buy_offset=2,
+        buy_price=100,
+        buy_target=3,
+        max_buy_quantity=500,
+        max_orders_cap=30,
+        buy_stop_price=70,
+        ltp=101.5,
+    )
+    assert len(strategy.orders) == 2
+    assert strategy.outstanding_quantity == -20
