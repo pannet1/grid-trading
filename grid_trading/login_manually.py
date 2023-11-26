@@ -1,13 +1,15 @@
+from omspy_brokers.finvasia import Finvasia
 import yaml
+import pyotp
+import time
+
 
 BROKER = Finvasia
 dir_path = "../../"
 with open(dir_path + "config2.yaml", "r") as f:
     config = yaml.safe_load(f)[0]["config"]
-    broker = BROKER(**config)
-    broker.authenticate()
+    print(config)
 
-Wserver.start(broker)
-while True:
-    quote = Wserver.ltp(["NSE:TCS", "NSE:INFY"])
-    print(quote)
+time.sleep(5)
+twoFA = pyotp.TOTP(config["pin"]).now()
+print(twoFA)

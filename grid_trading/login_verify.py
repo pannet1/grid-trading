@@ -1,10 +1,13 @@
-from omspy.brokers.finvasia import Finvasia
+from omspy_brokers.finvasia import Finvasia
 import yaml
-import os
 
-os.environ["HOME"]
-with open("../../finvasia.yaml") as f:
-    config = yaml.safe_load(f)
+BROKER = Finvasia
+dir_path = "../../"
+with open(dir_path + "config2.yaml", "r") as f:
+    config = yaml.safe_load(f)[0]["config"]
     print(config)
-broker = Finvasia(**config)
-broker.authenticate()
+    broker = BROKER(**config)
+    if broker.authenticate():
+        print("success")
+
+print(broker.orders)
