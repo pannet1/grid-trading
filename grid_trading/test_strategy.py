@@ -135,6 +135,8 @@ def test_strategy_defaults():
     assert strategy.symbol == "BHEL"
     assert strategy.orders == []
     assert strategy._prices == set()
+    assert strategy.outstanding_quantity == 0
+
 
 
 def test_strategy_defaults_direction_side_case():
@@ -295,8 +297,6 @@ def test_strategy_json_info(strategy_buy, strategy_sell):
             ltp=95, target=98, backward=98, forward=100, key="target"
         )
     order = sell.create_order()
-    for o in order.orders:
-        print(o.JSON)
     assert json.loads(order.orders[0].JSON) == dict(
         ltp=102.4, target=99.4, forward=102, backward=100, key="entry"
     )
@@ -604,6 +604,17 @@ def test_before_entry_check_max_quantity(strategy_buy):
     assert len(s.orders) == 3
     assert s.total_quantity == (30, 30)
 
+def test_total_quantity_outstanding(strategy_buy):
+    s = strategy_buy
+    s.outstanding_quantity = 20
+    s.run({"BHEL": 97.9})
+    assert len(s.orders) == 1
+    assert s.total_quantity == (30, 10)
+    s.run({"BHEL": 95.9})
+    s.run({"BHEL": 93.9})
+    assert len(s.orders) == 3
+    s.outstanding_quantity = -20
+    assert s.total_quantity == (30, 50)
 
 def test_strategy_db(strategy_buy):
     s = strategy_buy
@@ -679,11 +690,9 @@ def test_entry_buy_strategy(strategy_buy):
     s = strategy_buy
     s.entry()
     assert len(s.orders) == 0
-    print(s.next_forward_price, s.next_backward_price)
     assert s.next_forward_price == 104
     s.ltp = 97
     s.entry()
-    print(s.prices)
     assert len(s.orders) == 1
     for i in range(10):
         s.entry()

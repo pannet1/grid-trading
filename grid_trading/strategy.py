@@ -81,6 +81,7 @@ class Strategy(BaseStrategy):
     max_buy_quantity: float = 1e6
     max_sell_quantity: float = 1e6
     max_orders_cap: Optional[float]
+    outstanding_quantity: int = 0
     buy_stop_price: Optional[float]
     sell_stop_price: Optional[float]
     bot_function: Optional[Callable]
@@ -180,6 +181,11 @@ class Strategy(BaseStrategy):
                     buy_qty += order.quantity
                 elif order.side.upper() == "SELL":
                     sell_qty += order.quantity
+        outstanding = self.outstanding_quantity
+        if outstanding > 0:
+            buy_qty += outstanding
+        else:
+            sell_qty+= abs(outstanding)
         return (buy_qty, sell_qty)
 
     def before_entry_check_max_quantity(self):
