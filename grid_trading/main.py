@@ -67,6 +67,7 @@ def main():
         broker = Finvasia(**config)
         broker.authenticate()
         datafeed = Wserver(broker, tokens=tokens)
+        print(datafeed)
 
     connection = get_database()
     for params in parameters:
@@ -87,7 +88,6 @@ def main():
 
     # Initial update for the next entry prices
     ltps = datafeed.ltp
-    print(ltps)
     for strategy in strategies:
         strategy.run(ltps)
 

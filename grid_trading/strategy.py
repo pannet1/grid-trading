@@ -1,3 +1,4 @@
+from google.cloud.firestore import Client
 from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
@@ -48,6 +49,17 @@ class BaseStrategy(BaseModel):
             order = Order(**row)
             orders.append(order)
         return orders
+
+    def order_count_from_db(self)->int:
+        """
+        Get the number of orders from database for this symbol
+        """
+        if self.connection is None:
+            return 0
+        db = self.connection
+        query = "select count(*) from orders where symbol= :symbol"
+        rows = db.query(query, params=dict(symbol=self.symbol))
+        return rows
 
     def _load_initial_orders(self):
         """
@@ -261,24 +273,12 @@ class Strategy(BaseStrategy):
         if price is None:
             price = self.ltp
         if self.direction == 1:
-            if price < self.next_backward_price:
-                self._next_forward_price = self.next_backward_price
-                self._next_backward_price -= self.buy_offset
-            elif price > self.next_forward_price:
-                self._next_forward_price = min(
-                    self.next_forward_price + self.buy_offset,
-                    self.buy_price,
-                )
-                self._next_backward_price = self.next_forward_price - self.buy_offset
+            self._next_forward_price = min(self.next_forward_price, self.buy_price)
+            self._next_backward_price = min(self.buy_price - self.buy_offset, price - self.buy_offset)
         elif self.direction == -1:
-            if price < self.next_backward_price:
-                self._next_backward_price = max(
-                    self.sell_price, self.next_backward_price - self.sell_offset
-                )
-                self._next_forward_price = self.next_backward_price + self.sell_offset
-            elif price > self.next_forward_price:
-                self._next_backward_price = self.next_forward_price
-                self._next_forward_price += self.sell_offset
+            price = max(price, self.sell_price)
+            self._next_backward_price = max(self.next_backward_price, self.sell_price)
+            self._next_forward_price = max(self.sell_price + self.sell_offset, price+self.sell_offset)
 
     def _create_entry_order(self) -> Optional[Order]:
         """
