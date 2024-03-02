@@ -1,0 +1,88 @@
+﻿My >>> INPUTS in UPPER case
+Investment algo requirements:
+
+1) Use the Python language and WebSocket API to store daily logs in this format investment_log_ddmmyyhhmmss.log, telegram messages when an order is placed (both buy and sell side), the order is filled, and the client EOB file for reference.
+>>> THE DB SAVES DUAL PURPOSE OF STORING THE ORDERS AND LOGGING
+
+2) Both buy and sell are based on the limit orders and stop loss orders are based on the market.
+>>> OK
+
+3) Need config file, to update all the trading account details and general inputs to run this algo and add the algo end time for the day (example: I want to stop running this algo at 4.00 PM on that day, algo end time: 16.00) and Iteration_Sleep sleep option in the config file (example: 30sec once check the conditions algo will sleep for 30sec)
+>>> NOT SURE
+
+4) During algo running time, every 5 min take the backup for all the new trades and past trades into a .csv file(FA30823__OrderStatus_ddmmyy_hhmmss.csv), if algo have any issues or stop manually I will take the latest backup file and run the algo based on last 5 min data. 
+>>> RESUMING TRADES AFTER KILLING SCRIPT AND RESTART
+
+5) For equity initial order for the script is Buy and for FNO initial order can be both buy and sell are applicable.
+>>> BUY AND SELL ARE ANYWAY MENTIONED SEPERATELY
+
+6) If suppose the order filled quantity is partially filled by EOB, add quantity filled details from the broker into the end report file.
+>>> A BETTER MECHANISM FOR PARTIAL FILLS IS NEEDED
+
+7) keep only order records which are completely or partially filled in the end report file.
+>>> SAME AS 6)
+
+8) The rollover column is applicable only for futures only, Add details to the input sheet when to rollover with datetime.
+>>> TO BE IMPLEMENTED ?
+
+9) when a limit order is placed in the broker system, if the order is not completed immediately, the system needs to check the order status until it is filled for that day or remove the unfilled trade details from the system and place the valid order the next trading day.
+>>> WHEN SQUAREOFF TIME IS REACHED, WE CANCEL ALL PENDING ORDERS. NEXT DAY WE DO NOT HAVE THE MEMORY OF ANY ORDERS OF PREVIOUS DAY, EXCEPT FOR OPEN POSITION.
+
+10) Add client EOB file template for reference.
+>>> ORDERS DB
+
+11) In the input sheet c column "Side":
+     a) If the input is BUY, first we place a buy order, when target or stop loss hit will place a sell order.
+     b) if the input is SELL, First we place a sell order, when target or stop loss hit will place a buy order.
+     c) if the input is BOTH, Based on the values range input entry, either it will place a buy or sell order.
+>>> BOTH WILL BE IMPLEMENTED LATER.
+
+12) Added Excel sheet definitions below, Various columns such as 'Exchange', 'Stock', 'Side', etc. represent specific trading parameters, like exchange choice, stock symbol, trade direction, quantity, offset, target, status, maximum quantity limits, stop losses, rollover requirements, and rollover timestamps.
+
+	Exchange	        Which exchange need to be considered for trade
+	Stock	                Stock symbol
+	Side	                Which side prefers first, Buy or sell or both
+	BuyQty	                Trade quantity for each order (eg: 50 means every time it places buy order quantity as 50)
+	Buyoffset	        Range to enter trade (Formula: last trade entry price in the system - buyoffset)
+	BuyTarget	        Formula: trade entry + buyTarget 
+
+	Buyprice	        If no position in system for script.
+	                       a) Entry price is less than or equal to the buy price mention in input sheet.
+	                  If positions in system for script.
+	                       b) min(active traded prices) of existing active position - Buyoffset for that day is next entry price.
+
+	Sellprice	        If no position in system for script.
+	                       a) Entry price is grater than or equal to the sell price mention in input sheet.
+	                  If positions in system for script.
+	                       b) max(active traded prices) of existing active position + selloffset for that day is next entry price.
+
+	Paper/Real mode need to add.
+
+	Do not store stoploss, always stop loss should take from daily read input sheet. 
+                      case 1) for buy when LTP is less than or equal to buy stoploss price exit all the active postions placed by this system. 
+                      case 2) For sell when LTP is grater than or equal to sell stop price exit all the active postions placed by this system. 
+
+
+
+	sellqty	             Trade quantity for each order (eg: 50 means every time it places sell order quantity as 50)
+	selloffset	        Range to enter the trade
+	sell Target	        Formula: trade entry - sell target
+	status	                Start or end
+	maxbuyqty	        Maximum total buy quantity can be placed in the broker system for this script placed by this algo.
+	maxsellqty	        Maximum total sell quantity can be placed in the broker system for this script placed by this algo.
+	Buy side stoploss	If LTP is below buy-side stop loss then exit algo placed position with marker order. 
+	Sell side Stoploss	If LTP is above sell-side stop loss then exit algo placed position with marker order. 
+	Rollover	        If rollover is required or not
+	Rollover datetime	When to rollover
+
+>>> ORDERS DB SHOULD COVER EVERYTHING.
+
+13) This algorithm is created for positional trading. If a target is met within the day, the algorithm will exit and place a fresh order. For instance, if 'bankbees' has a buy-side price of 460 and the system's entry point is 460, with a target of 4 rupees, then when the Last Traded Price (LTP) reaches 464, the system will exit and await the price to revert to 460 or break the range below.
+>>> SYSTEM CORE.
+
+14) Added the previous algo execution folder for reference, logfiles, client end report and order status template and order status backfiles files in the OrderStatus folder.
+
+15) The program should run in both Unix and Windows environments with the required changes. 
+>>> DONE
+
+
