@@ -1,5 +1,5 @@
 DB: "/tmp/orders.sqlite"
 MODE: PROD
-DIR_PATH: "/home/pi/"
+DIR_PATH: "../../"
 CONFIG_FILE: config2.yaml
 
