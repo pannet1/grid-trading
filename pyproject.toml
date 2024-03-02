@@ -19,6 +19,7 @@ norenrestapipy = {git = "https://github.com/pannet1/NorenRestApiPy"}
 kiteconnect = "^5.0.0"
 selenium = "^4.15.2"
 websocket-client = "^1.6.4"
+omspy = "^0.16.2"
 
 
 [build-system]

@@ -1,4 +1,3 @@
-from google.cloud.firestore import Client
 from pydantic import BaseModel, PrivateAttr
 from omspy.order import Order, CompoundOrder
 import pendulum
