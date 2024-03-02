@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "grid-trading"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "grid_trading"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+logzero = "^1.7.0"
+sqlite-utils = "^3.35.2"
+omspy-brokers = {git = "https://github.com/pannet1/omspy-brokers"}
+pandas = "^2.1.3"
+numpy = "^1.26.2"
+pyotp = "^2.9.0"
+pydantic = "<2.0.0"
+norenrestapipy = {git = "https://github.com/pannet1/NorenRestApiPy"}
+kiteconnect = "^5.0.0"
+selenium = "^4.15.2"
+websocket-client = "^1.6.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

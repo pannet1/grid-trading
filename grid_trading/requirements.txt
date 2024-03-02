@@ -1,0 +1,11 @@
+logzero
+sqlite_utils
+git+https://github.com/pannet1/omspy-brokers
+pandas
+numpy
+pyotp
+pydantic
+git+https://github.com/pannet1/NorenRestApiPy
+kiteconnect
+selenium
+websocket_client
