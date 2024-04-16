@@ -1,13 +1,60 @@
-logzero
-sqlite_utils
-../omspy-main/
-git+https://github.com/pannet1/omspy-brokers
-pandas
-numpy
-pyotp
-pydantic
-git+https://github.com/pannet1/NorenRestApiPy
-kiteconnect
-selenium
-websocket_client
-pyyaml
+attrs==23.2.0 ; python_version >= "3.9" and python_version < "4.0"
+autobahn[twisted]==19.11.2 ; python_version >= "3.9" and python_version < "4.0"
+automat==22.10.0 ; python_version >= "3.9" and python_version < "4.0"
+certifi==2024.2.2 ; python_version >= "3.9" and python_version < "4.0"
+cffi==1.16.0 ; os_name == "nt" and implementation_name != "pypy" and python_version >= "3.9" and python_version < "4.0" or python_version >= "3.9" and python_version < "4.0" and platform_python_implementation != "PyPy"
+charset-normalizer==3.3.2 ; python_version >= "3.9" and python_version < "4.0"
+click-default-group==1.2.4 ; python_version >= "3.9" and python_version < "4.0"
+click==8.1.7 ; python_version >= "3.9" and python_version < "4.0"
+colorama==0.4.6 ; python_version >= "3.9" and python_version < "4.0" and sys_platform == "win32" or python_version >= "3.9" and python_version < "4.0" and platform_system == "Windows"
+constantly==23.10.4 ; python_version >= "3.9" and python_version < "4.0"
+cryptography==42.0.5 ; python_version >= "3.9" and python_version < "4.0"
+exceptiongroup==1.2.0 ; python_version >= "3.9" and python_version < "3.11"
+h11==0.14.0 ; python_version >= "3.9" and python_version < "4.0"
+hyperlink==21.0.0 ; python_version >= "3.9" and python_version < "4.0"
+idna==3.7 ; python_version >= "3.9" and python_version < "4.0"
+incremental==22.10.0 ; python_version >= "3.9" and python_version < "4.0"
+kiteconnect==5.0.1 ; python_version >= "3.9" and python_version < "4.0"
+logzero==1.7.0 ; python_version >= "3.9" and python_version < "4.0"
+norenrestapipy @ file:///home/machine/temp_pi/Projects/grid-trading/NorenRestApiPy-0.0.20-py2.py3-none-any.whl ; python_version >= "3.9" and python_version < "4.0"
+numpy==1.26.4 ; python_version < "4.0" and python_version >= "3.9"
+omspy-brokers @ git+https://github.com/pannet1/omspy-brokers@HEAD ; python_version >= "3.9" and python_version < "4.0"
+omspy==0.16.2 ; python_version >= "3.9" and python_version < "4.0"
+outcome==1.3.0.post0 ; python_version >= "3.9" and python_version < "4.0"
+pandas==2.2.2 ; python_version >= "3.9" and python_version < "4.0"
+pendulum==2.1.2 ; python_version >= "3.9" and python_version < "4.0"
+pluggy==1.4.0 ; python_version >= "3.9" and python_version < "4.0"
+pyasn1-modules==0.4.0 ; python_version >= "3.9" and python_version < "4.0"
+pyasn1==0.6.0 ; python_version >= "3.9" and python_version < "4.0"
+pycparser==2.22 ; os_name == "nt" and implementation_name != "pypy" and python_version >= "3.9" and python_version < "4.0" or python_version >= "3.9" and python_version < "4.0" and platform_python_implementation != "PyPy"
+pydantic==1.10.15 ; python_version >= "3.9" and python_version < "4.0"
+pyopenssl==24.1.0 ; python_version >= "3.9" and python_version < "4.0"
+pyotp==2.9.0 ; python_version >= "3.9" and python_version < "4.0"
+pysocks==1.7.1 ; python_version >= "3.9" and python_version < "4.0"
+python-dateutil==2.9.0.post0 ; python_version >= "3.9" and python_version < "4.0"
+pytz==2024.1 ; python_version >= "3.9" and python_version < "4.0"
+pytzdata==2020.1 ; python_version >= "3.9" and python_version < "4.0"
+pywin32==306 ; python_version >= "3.9" and python_version < "4.0" and sys_platform == "win32"
+pyyaml==6.0.1 ; python_version >= "3.9" and python_version < "4.0"
+requests==2.31.0 ; python_version >= "3.9" and python_version < "4.0"
+selenium==4.19.0 ; python_version >= "3.9" and python_version < "4.0"
+service-identity==24.1.0 ; python_version >= "3.9" and python_version < "4.0"
+setuptools==69.5.1 ; python_version >= "3.9" and python_version < "4.0"
+six==1.16.0 ; python_version >= "3.9" and python_version < "4.0"
+sniffio==1.3.1 ; python_version >= "3.9" and python_version < "4.0"
+sortedcontainers==2.4.0 ; python_version >= "3.9" and python_version < "4.0"
+sqlite-fts4==1.0.3 ; python_version >= "3.9" and python_version < "4.0"
+sqlite-utils==3.36 ; python_version >= "3.9" and python_version < "4.0"
+tabulate==0.9.0 ; python_version >= "3.9" and python_version < "4.0"
+trio-websocket==0.11.1 ; python_version >= "3.9" and python_version < "4.0"
+trio==0.25.0 ; python_version >= "3.9" and python_version < "4.0"
+twisted-iocpsupport==1.0.4 ; python_version >= "3.9" and python_version < "4.0" and platform_system == "Windows"
+twisted==24.3.0 ; python_version >= "3.9" and python_version < "4.0"
+txaio==23.1.1 ; python_version >= "3.9" and python_version < "4.0"
+typing-extensions==4.11.0 ; python_version >= "3.9" and python_version < "4.0"
+tzdata==2024.1 ; python_version >= "3.9" and python_version < "4.0"
+urllib3==2.2.1 ; python_version >= "3.9" and python_version < "4.0"
+urllib3[socks]==2.2.1 ; python_version >= "3.9" and python_version < "4.0"
+websocket-client==1.7.0 ; python_version >= "3.9" and python_version < "4.0"
+wsproto==1.2.0 ; python_version >= "3.9" and python_version < "4.0"
+zope-interface==6.3 ; python_version >= "3.9" and python_version < "4.0"
