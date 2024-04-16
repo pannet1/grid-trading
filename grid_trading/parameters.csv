@@ -1,6 +1,6 @@
 exchange,symbol,side,buy_quantity,buy_offset,buy_target,buy_price,sell_quantity,sell_offset,sell_target,sell_price,status,max_buy_quantity,max_sell_quantity,max_orders_cap,buy_stop_price,sell_stop_price
-NSE,NMDC-EQ,BUY,20,0.1,0.2,244,,,,,1,60,,100,130,
-NSE,BHEL-EQ,BUY,50,0.1,0.2,200,,,,,1,150,,100,10,
+NSE,NMDC-EQ,BUY,1,0.1,0.2,244,,,,,1,3,,100,130,
+NSE,BHEL-EQ,BUY,1,0.1,0.2,200,,,,,1,3,,100,10,
 NFO,NIFTY23NOV23C19700,BUY,50,5,3,110,,,,,1,100,,10,60,
 MCX,CRUDEOIL18DEC23,BUY,10,2,2,6000,,,,,1,1000,,100,100,
 MCX,SILVERMIC30NOV23,BUY,10,3,3,60000,,,,,1,1000,,100,100,

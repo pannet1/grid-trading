@@ -410,6 +410,8 @@ class Strategy(BaseStrategy):
         """
         logic to exit a position
         """
+        if not self.ltp:
+            return
         if not (self.orders):
             return
         for order in self.orders:
